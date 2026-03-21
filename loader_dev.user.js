@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name         Cookie Clicker Basic Mod (CCBM)
+// @name         CCBM_dev
 // @namespace    https://github.com/tybob8010/CCBM/
-// @version      1.0.0
+// @version      9.9.9
 // @author       tybob8010(ぼぶ)
 // @match        https://orteil.dashnet.org/cookieclicker/
 // @grant        window.close
@@ -12,13 +12,15 @@
     //初期宣言
     //====================================================================================================
     
-    const BASE_URL = 'https://tybob8010.github.io/CCBM/';
-
+    // 【重要】GitHub Pagesではなく、GitHubのdevブランチを直接参照するように変更
+    const BASE_URL = 'https://raw.githubusercontent.com/tybob8010/CCBM/tree/dev/';
+    
+    // 特権関数の定義（CCACMが終了するために必要）
     window.closeCCACM = function() {
-        console.log("[CCBM] Closing tab via loader privilege...");
+        console.log("[CCBM-Dev] Closing tab via dev loader...");
         window.close();
     };
-    
+
 
     //====================================================================================================
     //読み込み
@@ -26,20 +28,20 @@
     
     const loadModules = async () => {
         try {
-            // 1. 配信中のモジュールリストを取得
+            // devブランチの modules.json を取得
             const res = await fetch(`${BASE_URL}modules.json?t=${Date.now()}`);
             const data = await res.json();
             
-            // 2. Game.LoadMod を使って各.jsを読み込む
             data.active_modules.forEach(path => {
                 const url = `${BASE_URL}${path}`;
                 Game.LoadMod(url); 
-                console.log(`[CCBM] Official Load: ${url}`);
+                console.log(`[CCBM-Dev] Official Load: ${url}`);
             });
             
-            Game.Notify('CCBM起動', 'GitHubから最新のモジュールを読み込みました', [16, 5], 2);
+            // 開発版であることがわかるように通知を少し変更
+            Game.Notify('CCBM Dev起動', '開発用ブランチから読み込みました', [16, 5], 2);
         } catch (e) {
-            console.error('[CCBM] Failed to load modules:', e);
+            console.error('[CCBM-Dev] Failed to load modules:', e);
         }
     };
 
@@ -48,7 +50,6 @@
     //実行
     //====================================================================================================
     
-    // ゲームの起動を確認してから実行
     const boot = setInterval(() => {
         if (typeof Game !== 'undefined' && Game.ready) {
             clearInterval(boot);
