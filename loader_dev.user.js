@@ -13,7 +13,7 @@
     //====================================================================================================
     
     // 【重要】GitHub Pagesではなく、GitHubのdevブランチを直接参照するように変更
-    const BASE_URL = 'https://raw.githubusercontent.com/tybob8010/CookieClickerBasicMod/dev/';
+    const BASE_URL = 'https://raw.githubusercontent.com/tybob8010/CCBM/dev/';
     
     // 特権関数の定義（CCACMが終了するために必要）
     window.closeCCACM = function() {
