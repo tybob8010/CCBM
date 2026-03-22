@@ -1,6 +1,6 @@
 /*
     CCBM (Cookie Clicker Basic MOD)
-    v.1.2.0 - Forced Layout & Expanded Width
+    v.1.2.1 - Center Alignment & Fixed Button Styles
 */
 
 (function() {
@@ -24,14 +24,22 @@
                 .ccbm-icon-shaker { position: absolute; width: 48px; height: 48px; z-index: 10; animation: ccbmX_Extreme 0.6s infinite alternate ease-in-out, ccbmY_Extreme 0.3s infinite alternate ease-in-out; pointer-events: none; }
                 #ccbm_icon_element { width: 48px !important; height: 48px !important; background: url(img/icons.png) ${-4 * 48}px ${-0 * 48}px !important; cursor: pointer !important; filter: drop-shadow(0px 0px 4px #000) !important; position: relative; z-index: 20; pointer-events: auto; }
 
-                /* --- ウィンドウサイズを強制的に広げる --- */
+                /* --- ウィンドウ位置とサイズの修正 --- */
                 #prompt {
                     width: 800px !important; 
-                    margin-left: -400px !important; 
+                    left: 50% !important; /* 画面中央基準 */
+                    top: 50% !important;
+                    transform: translate(-50%, -50%) !important; /* 完璧に中央へ */
+                    margin: 0 !important;
                     text-align: left !important;
                 }
 
-                /* 1枚目の画像のようなリストレイアウトを再現 */
+                #prompt h3 {
+                    text-align: center !important; /* 統合設定のタイトルを中央へ */
+                    margin-bottom: 12px !important;
+                }
+
+                /* リスト構造 */
                 .ccbm-row {
                     display: flex !important;
                     align-items: center !important;
@@ -43,6 +51,16 @@
                     width: 180px !important;
                     flex-shrink: 0 !important;
                     margin-right: 20px !important;
+                }
+
+                /* ボタンの余白問題を解消 */
+                .ccbm-control-btn {
+                    display: inline-block !important;
+                    width: 100% !important;
+                    margin: 0 !important;
+                    padding: 4px 0 !important; /* 上下パディングのみ */
+                    text-align: center !important;
+                    box-sizing: border-box !important;
                 }
 
                 .ccbm-desc-area {
@@ -94,7 +112,6 @@
 
             const isEnabled = ccacm.config.enabled;
             
-            // 構造を極限までシンプルにし、flexで制御
             let content = `
                 <div id="ccbm_container" style="width:100%; color:#eee;">
                     <div style="text-align:center; color:#ecc606; font-weight:bold; font-size:18px; margin-bottom:15px; border-bottom:1px solid #444; padding-bottom:8px;">
@@ -103,7 +120,7 @@
 
                     <div class="ccbm-row">
                         <div class="ccbm-label-area">
-                            <a class="option smallFancyButton ${isEnabled ? 'on' : 'off'}" style="width:100%; margin:0;" onclick="Game.mods['CCACM'].toggleEnabled();">
+                            <a class="option smallFancyButton ccbm-control-btn ${isEnabled ? 'on' : 'off'}" onclick="Game.mods['CCACM'].toggleEnabled();">
                                 自動終了: ${isEnabled ? 'ON' : 'OFF'}
                             </a>
                         </div>
@@ -123,7 +140,7 @@
 
                     <div class="ccbm-row ${isEnabled ? '' : 'ccbm-disabled'}">
                         <div class="ccbm-label-area">
-                            <a class="option smallFancyButton" style="width:100%; margin:0;" onclick="Game.mods['CCACM'].updateTime(l('ccbm_target_time').value);">
+                            <a class="option smallFancyButton ccbm-control-btn" onclick="Game.mods['CCACM'].updateTime(l('ccbm_target_time').value);">
                                 時刻を保存
                             </a>
                         </div>
@@ -134,7 +151,6 @@
                 </div>
             `;
 
-            // 第一引数にタイトル、第二引数にコンテンツを入れる標準形式
             Game.Prompt(`<h3>CCBM 統合設定</h3>` + content, ['閉じる']);
         }
     };
