@@ -1,10 +1,9 @@
 /*
     CCBM (Cookie Clicker Basic MOD)
-    v.1.1.4 - Dynamic Config Menu with CCACM Integration
+    v.1.1.5 - Left-aligned UI & Enhanced Animation
 */
 
 (function() {
-    // 1. オブジェクト定義（initの外側）
     window.CCBM = {
         name: 'CCBM-Core',
         modules: {},
@@ -14,7 +13,6 @@
             console.log(`[CCBM] Module registered: ${name} (${id})`);
         },
 
-        // スタイルシートの生成
         injectStyle: function() {
             if (document.getElementById('ccbm_styles')) return;
             const style = document.createElement('style');
@@ -80,17 +78,26 @@
                     transition: opacity 0.3s ease-out;
                 }
 
-                /* 設定画面用：無効時のグレーアウト設定 */
+                /* 設定画面用：左揃えと無効化のスタイル */
+                .ccbm-config-container {
+                    text-align: left; /* 左揃えに変更 */
+                    padding: 10px 20px;
+                }
                 .ccbm-config-disabled {
                     opacity: 0.4;
                     pointer-events: none;
                     filter: grayscale(1);
                 }
+                .ccbm-label {
+                    font-size: 13px;
+                    color: #ccc;
+                    margin-bottom: 5px;
+                    display: inline-block;
+                }
             `;
             document.head.appendChild(style);
         },
 
-        // アイコンを描画する関数
         drawIcon: function() {
             if (document.getElementById('ccbm_base')) return;
             const target = document.getElementById('sectionLeft') || document.getElementById('wrapper');
@@ -118,7 +125,7 @@
                 e.stopPropagation();
             };
 
-            icon.onmouseover = () => Game.tooltip.draw(icon, '<div style="padding:8px;width:180px;text-align:center;"><b>CCBM 統合設定</b><br>クリックで設定画面を開く</div>', 'this');
+            icon.onmouseover = () => Game.tooltip.draw(icon, '<div style="padding:8px;width:180px;text-align:center;"><b>CCBM 設定</b><br>クリックで設定画面を開く</div>', 'this');
             icon.onmouseout = () => Game.tooltip.hide();
 
             shaker.appendChild(icon);
@@ -127,45 +134,40 @@
             target.appendChild(base);
         },
 
-        // 統合メインメニュー
         openMainMenu: function() {
             const ccacm = Game.mods['CCACM'];
             if (!ccacm) {
-                Game.Prompt(`<h3>CCBM 統合設定</h3><div class="block">CCACMが見つかりません</div>`, ['閉じる']);
+                Game.Prompt(`<h3>CCBM 設定</h3><div class="block">CCACMが見つかりません</div>`, ['閉じる']);
                 return;
             }
 
-            // メニューの中身を構築
-            const updateContent = () => {
-                const isEnabled = ccacm.config.enabled;
-                let content = `
-                    <h3>CCBM 統合設定</h3>
-                    <div class="block" style="text-align:center; padding:10px;">
-                        <div class="listing">
-                            <a class="option smallFancyButton ${isEnabled ? 'on' : 'off'}" id="ccbm_ccacm_toggle"
-                               onclick="Game.mods['CCACM'].toggleEnabled(); CCBM.openMainMenu();">
-                                自動終了 (CCACM): ${isEnabled ? 'ON' : 'OFF'}
-                            </a>
-                        </div>
-
-                        <div id="ccbm_ccacm_detail" class="${isEnabled ? '' : 'ccbm-config-disabled'}" style="margin-top:15px; border-top: 1px solid #444; padding-top:10px;">
-                            <label style="font-size:12px; color:#ccc;">終了時刻設定:</label><br>
-                            <input type="time" id="ccbm_target_time" value="${ccacm.config.targetTime}" 
-                                style="background:#000; color:#fff; border:1px solid #666; font-size:18px; margin:8px 0;">
-                            <br>
-                            <a class="option smallFancyButton" onclick="Game.mods['CCACM'].updateTime(l('ccbm_target_time').value);">時刻を保存</a>
-                        </div>
+            const isEnabled = ccacm.config.enabled;
+            let content = `
+                <h3>CCBM 設定</h3>
+                <div class="block ccbm-config-container">
+                    <div class="listing">
+                        <a class="option smallFancyButton ${isEnabled ? 'on' : 'off'}" id="ccbm_ccacm_toggle"
+                           style="margin-bottom:10px;"
+                           onclick="Game.mods['CCACM'].toggleEnabled();">
+                            自動終了 (CCACM): ${isEnabled ? 'ON' : 'OFF'}
+                        </a>
                     </div>
-                `;
-                return content;
-            };
 
-            // Game.Prompt を更新（既に開いている場合は中身を差し替える）
-            Game.Prompt(updateContent(), ['閉じる']);
+                    <div id="ccbm_ccacm_detail" class="${isEnabled ? '' : 'ccbm-config-disabled'}" 
+                         style="margin-top:5px; border-top: 1px solid #444; padding-top:10px;">
+                        <span class="ccbm-label">終了時刻設定:</span><br>
+                        <input type="time" id="ccbm_target_time" value="${ccacm.config.targetTime}" 
+                            style="background:#000; color:#fff; border:1px solid #666; font-size:18px; margin:8px 0; padding:2px 5px; border-radius:4px;">
+                        <br>
+                        <a class="option smallFancyButton" onclick="Game.mods['CCACM'].updateTime(l('ccbm_target_time').value);">時刻を保存</a>
+                    </div>
+                </div>
+            `;
+
+            Game.Prompt(content, ['閉じる']);
         }
     };
 
-    // 2. MOD登録
     Game.registerMod("CCBM", {
         init: function() {
             console.log("[CCBM] Init called.");
