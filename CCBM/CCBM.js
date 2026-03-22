@@ -1,6 +1,6 @@
 /*
     CCBM (Cookie Clicker Basic MOD)
-    v.1.0.0
+    v.1.1.4 - Dynamic Config Menu with CCACM Integration
 */
 
 (function() {
@@ -14,31 +14,26 @@
             console.log(`[CCBM] Module registered: ${name} (${id})`);
         },
 
-        // スタイルシートの生成（CCACMのアニメーション設定を統合）
+        // スタイルシートの生成
         injectStyle: function() {
             if (document.getElementById('ccbm_styles')) return;
             const style = document.createElement('style');
             style.id = 'ccbm_styles';
             style.innerHTML = `
-                /* アイコンの揺れアニメーション（左右・極端） */
                 @keyframes ccbmX_Extreme { from { left: -5px; } to { left: 5px; } }
-                /* アイコンの跳ねアニメーション（上下・鋭い） */
                 @keyframes ccbmY_Extreme { from { transform: translateY(0px); } to { transform: translateY(-7px); } }
-                /* 背後Shineの回転アニメーション */
                 @keyframes ccbmRotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-                /* 歯車アイコンのベースコンテナ */
                 .ccbm-base {
                     position: absolute !important;
-                    bottom: 50px !important;    /* CCACMの位置に合わせる */
-                    right: 5px !important;      /* sectionLeftの端に寄せる */
+                    bottom: 50px !important;
+                    right: 5px !important;
                     width: 48px;
                     height: 48px;
                     z-index: 1000000;
                     pointer-events: none;
                 }
 
-                /* アニメーションを適用するラッパー */
                 .ccbm-icon-shaker {
                     position: absolute;
                     width: 48px;
@@ -50,7 +45,6 @@
                     pointer-events: none;
                 }
 
-                /* 歯車アイコン本体 */
                 #ccbm_icon_element {
                     width: 48px !important;
                     height: 48px !important;
@@ -63,12 +57,10 @@
                     transition: filter 0.1s ease-out;
                 }
 
-                /* ホバー時に光らせる演出 */
                 #ccbm_icon_element:hover {
                     filter: drop-shadow(0px 0px 6px rgba(255,255,255,0.7)) brightness(1.0) !important;
                 }
 
-                /* アイコン背後の回転する光(shine.png) */
                 #ccbm_shine {
                     position: absolute;
                     width: 60px;
@@ -83,20 +75,24 @@
                     pointer-events: none;
                 }
 
-                /* ホバー時のみShineを表示 */
                 .ccbm-base:has(#ccbm_icon_element:hover) #ccbm_shine {
                     opacity: 0.6;
                     transition: opacity 0.3s ease-out;
+                }
+
+                /* 設定画面用：無効時のグレーアウト設定 */
+                .ccbm-config-disabled {
+                    opacity: 0.4;
+                    pointer-events: none;
+                    filter: grayscale(1);
                 }
             `;
             document.head.appendChild(style);
         },
 
-        // アイコンを実際に描画する関数
+        // アイコンを描画する関数
         drawIcon: function() {
             if (document.getElementById('ccbm_base')) return;
-            
-            // CCACMと同じく sectionLeft を優先、なければ wrapper
             const target = document.getElementById('sectionLeft') || document.getElementById('wrapper');
             if (!target) return;
 
@@ -125,27 +121,47 @@
             icon.onmouseover = () => Game.tooltip.draw(icon, '<div style="padding:8px;width:180px;text-align:center;"><b>CCBM 統合設定</b><br>クリックで設定画面を開く</div>', 'this');
             icon.onmouseout = () => Game.tooltip.hide();
 
-            // 組み立て
             shaker.appendChild(icon);
             base.appendChild(shine);
             base.appendChild(shaker);
             target.appendChild(base);
-            
-            console.log("[CCBM] Enhanced Icon injected.");
         },
 
+        // 統合メインメニュー
         openMainMenu: function() {
-            let content = `<h3>CCBM 統合設定</h3><div class="block" style="text-align:center; padding:10px;">`;
-            const keys = Object.keys(this.modules);
-            if (keys.length === 0) {
-                content += `<p>登録モジュールなし</p>`;
-            } else {
-                keys.forEach(id => {
-                    content += `<div class="listing"><a class="option smallFancyButton" onclick="CCBM.modules['${id}'].callback();">${this.modules[id].name}</a></div>`;
-                });
+            const ccacm = Game.mods['CCACM'];
+            if (!ccacm) {
+                Game.Prompt(`<h3>CCBM 統合設定</h3><div class="block">CCACMが見つかりません</div>`, ['閉じる']);
+                return;
             }
-            content += `</div>`;
-            Game.Prompt(content, ['閉じる']);
+
+            // メニューの中身を構築
+            const updateContent = () => {
+                const isEnabled = ccacm.config.enabled;
+                let content = `
+                    <h3>CCBM 統合設定</h3>
+                    <div class="block" style="text-align:center; padding:10px;">
+                        <div class="listing">
+                            <a class="option smallFancyButton ${isEnabled ? 'on' : 'off'}" id="ccbm_ccacm_toggle"
+                               onclick="Game.mods['CCACM'].toggleEnabled(); CCBM.openMainMenu();">
+                                自動終了 (CCACM): ${isEnabled ? 'ON' : 'OFF'}
+                            </a>
+                        </div>
+
+                        <div id="ccbm_ccacm_detail" class="${isEnabled ? '' : 'ccbm-config-disabled'}" style="margin-top:15px; border-top: 1px solid #444; padding-top:10px;">
+                            <label style="font-size:12px; color:#ccc;">終了時刻設定:</label><br>
+                            <input type="time" id="ccbm_target_time" value="${ccacm.config.targetTime}" 
+                                style="background:#000; color:#fff; border:1px solid #666; font-size:18px; margin:8px 0;">
+                            <br>
+                            <a class="option smallFancyButton" onclick="Game.mods['CCACM'].updateTime(l('ccbm_target_time').value);">時刻を保存</a>
+                        </div>
+                    </div>
+                `;
+                return content;
+            };
+
+            // Game.Prompt を更新（既に開いている場合は中身を差し替える）
+            Game.Prompt(updateContent(), ['閉じる']);
         }
     };
 
@@ -153,7 +169,6 @@
     Game.registerMod("CCBM", {
         init: function() {
             console.log("[CCBM] Init called.");
-            // 描画フックに登録
             Game.registerHook('draw', () => {
                 window.CCBM.drawIcon();
             });

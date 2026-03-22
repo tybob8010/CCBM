@@ -79,38 +79,26 @@
 
         // CCBMから呼び出される設定画面
         openConfigPrompt: function() {
-            let content = `
-                <h3>CCACM 自動終了設定</h3>
-                <div class="block" style="text-align:center;">
-                    <div class="listing">
-                        <a class="smallFancyButton option ${this.config.enabled ? 'on' : 'off'}" id="ccacm_toggle_btn"
-                        onclick="Game.mods['CCACM'].toggleEnabled();">
-                            自動終了: ${this.config.enabled ? 'ON' : 'OFF'}
-                        </a>
-                    </div>
-                    <div class="listing" style="margin-top:10px;">
-                        <label>終了時刻を設定:</label><br>
-                        <input type="time" id="CCACM_prompt_input" value="${this.config.targetTime}"
-                            style="background: #000; color: #fff; border: 1px solid #444; padding: 4px; font-size: 18px; cursor: pointer; margin-top:5px;">
-                    </div>
-                </div>
-            `;
-            // 設定保存時に CCBM のメインメニューに戻るように設定
-            Game.Prompt(content, [
-                ['保存', 'Game.mods["CCACM"].updateTime(l("CCACM_prompt_input").value); Game.ClosePrompt();'],
-                '閉じる'
-            ]);
+            // 【統合対応】CCBM側のメインメニューを再描画して表示を更新する
+            if (window.CCBM && typeof window.CCBM.openMainMenu === 'function') {
+                window.CCBM.openMainMenu();
+            }
         },
 
         toggleEnabled: function() {
             this.config.enabled = !this.config.enabled;
             PlaySound('snd/tick.mp3');
-            const btn = l('ccacm_toggle_btn');
-            if (btn) {
-                btn.className = `smallFancyButton option ${this.config.enabled ? 'on' : 'off'}`;
-                btn.innerText = `自動終了: ${this.config.enabled ? 'ON' : 'OFF'}`;
-            }
+            
+            // 通知
+            Game.Notify(`自動終了 ${this.config.enabled ? '有効' : '無効'}化`, 
+                        `自動終了が${this.config.enabled ? '有効' : '無効'}になりました。`, [1, 7], 0.75);
+            
             Game.WriteSave();
+            
+            // 【統合対応】ボタンを押した瞬間にCCBM側のメニュー（ロック状態）を更新
+            if (window.CCBM && typeof window.CCBM.openMainMenu === 'function') {
+                window.CCBM.openMainMenu();
+            }
         },
 
         updateTime: function(val) {
