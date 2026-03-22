@@ -1,9 +1,10 @@
 /*
     CCBM (Cookie Clicker Basic MOD)
-    v.1.1.6 - Fixed Left-aligned UI & Structured Menu
+    v.1.1.5 - Enhanced UI (Left-aligned & Structured)
 */
 
 (function() {
+    // 1. オブジェクト定義（initの外側）
     window.CCBM = {
         name: 'CCBM-Core',
         modules: {},
@@ -12,12 +13,12 @@
             this.modules[id] = { name: name, callback: callback };
         },
 
+        // スタイルシートの注入（統合メニュー用）
         injectStyle: function() {
             if (document.getElementById('ccbm_styles')) return;
             const style = document.createElement('style');
             style.id = 'ccbm_styles';
             style.innerHTML = `
-                /* アイコンアニメーション */
                 @keyframes ccbmX_Extreme { from { left: -5px; } to { left: 5px; } }
                 @keyframes ccbmY_Extreme { from { transform: translateY(0px); } to { transform: translateY(-7px); } }
                 @keyframes ccbmRotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
@@ -37,7 +38,9 @@
                     width: 48px;
                     height: 48px;
                     z-index: 10;
-                    animation: ccbmX_Extreme 0.6s infinite alternate ease-in-out, ccbmY_Extreme 0.3s infinite alternate ease-in-out;
+                    animation:
+                        ccbmX_Extreme 0.6s infinite alternate ease-in-out,
+                        ccbmY_Extreme 0.3s infinite alternate ease-in-out;
                     pointer-events: none;
                 }
 
@@ -50,6 +53,30 @@
                     position: relative;
                     z-index: 20;
                     pointer-events: auto;
+                    transition: filter 0.1s ease-out;
+                }
+
+                #ccbm_icon_element:hover {
+                    filter: drop-shadow(0px 0px 6px rgba(255,255,255,0.7)) brightness(1.0) !important;
+                }
+
+                #ccbm_shine {
+                    position: absolute;
+                    width: 60px;
+                    height: 60px;
+                    top: -10px;
+                    left: -5px;
+                    background: url(img/shine.png) no-repeat center;
+                    background-size: contain;
+                    z-index: 1;
+                    opacity: 0;
+                    animation: ccbmRotate 20s infinite linear;
+                    pointer-events: none;
+                }
+
+                .ccbm-base:has(#ccbm_icon_element:hover) #ccbm_shine {
+                    opacity: 0.6;
+                    transition: opacity 0.3s ease-out;
                 }
 
                 /* --- 設定画面のスタイル (強制左寄せ) --- */
@@ -61,10 +88,11 @@
                 .ccbm-subtitle {
                     font-size: 16px;
                     color: #ccc;
-                    border-left: 4px solid #ecc606;
+                    border-left: 4px solid #ecc606; /* 左側の黄色の線 */
                     padding-left: 8px;
                     margin: 15px 0 10px 0;
                     font-weight: bold;
+                    text-align: left !important;
                 }
 
                 .ccbm-row {
@@ -77,8 +105,9 @@
                     display: inline-block !important;
                     margin: 4px 0 !important;
                     white-space: nowrap !important; /* 改行禁止 */
-                    text-align: center;
-                    min-width: 180px;
+                    text-align: center !important;
+                    float: left !important; /* 左に寄せる */
+                    clear: both; /* 他のボタンと重ならないように */
                 }
 
                 .ccbm-config-disabled {
@@ -95,7 +124,8 @@
                     padding: 4px;
                     margin: 5px 0;
                     border-radius: 4px;
-                    display: block;
+                    display: block; /* 一行占有 */
+                    clear: both;
                 }
             `;
             document.head.appendChild(style);
@@ -109,16 +139,26 @@
             const base = document.createElement('div');
             base.id = 'ccbm_base';
             base.className = 'ccbm-base';
+            const shine = document.createElement('div');
+            shine.id = 'ccbm_shine';
             const shaker = document.createElement('div');
             shaker.className = 'ccbm-icon-shaker';
             const icon = document.createElement('div');
             icon.id = 'ccbm_icon_element';
-            icon.onclick = () => { PlaySound('snd/tick.mp3'); this.openMainMenu(); };
+            icon.onclick = (e) => {
+                PlaySound('snd/tick.mp3');
+                this.openMainMenu();
+                e.preventDefault(); e.stopPropagation();
+            };
+            icon.onmouseover = () => Game.tooltip.draw(icon, '<div style="padding:8px;width:180px;text-align:center;"><b>CCBM 統合設定</b><br>クリックで設定画面を開く</div>', 'this');
+            icon.onmouseout = () => Game.tooltip.hide();
             shaker.appendChild(icon);
+            base.appendChild(shine);
             base.appendChild(shaker);
             target.appendChild(base);
         },
 
+        // 統合メインメニュー
         openMainMenu: function() {
             const ccacm = Game.mods['CCACM'];
             if (!ccacm) {
@@ -141,7 +181,7 @@
                     </div>
 
                     <div id="ccbm_ccacm_detail" class="ccbm-row ${isEnabled ? '' : 'ccbm-config-disabled'}">
-                        <div style="font-size:12px; color:#aaa; margin-bottom:4px;">終了時刻を指定してください:</div>
+                        <div style="font-size:12px; color:#aaa; margin-bottom:4px; text-align:left;">終了時刻を指定してください:</div>
                         <input type="time" id="ccbm_target_time" class="ccbm-input-time" value="${ccacm.config.targetTime}">
                         
                         <a class="option ccbm-btn-left" 
@@ -149,7 +189,6 @@
                             設定時刻を保存
                         </a>
                     </div>
-
                 </div>
             `;
 
