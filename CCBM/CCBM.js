@@ -1,6 +1,6 @@
 /*
     CCBM (Cookie Clicker Basic MOD)
-    v.1.1.7 - Authentic List UI Style
+    v.1.1.8 - Authentic Full-Width List Layout
 */
 
 (function() {
@@ -50,10 +50,11 @@
                     pointer-events: auto;
                 }
 
-                /* --- 画像のスタイルを再現 --- */
+                /* --- リストレイアウトの再定義 --- */
                 .ccbm-menu-container {
                     text-align: left !important;
-                    padding: 4px 16px !important;
+                    padding: 8px 0 !important;
+                    width: 100%;
                 }
 
                 .ccbm-section-title {
@@ -61,46 +62,59 @@
                     text-align: center;
                     color: #ecc606;
                     font-weight: bold;
-                    margin: 12px 0 8px 0;
+                    font-size: 16px;
+                    margin: 10px 0;
+                    padding-bottom: 5px;
                     border-bottom: 1px solid #444;
-                    padding-bottom: 4px;
                 }
 
+                /* 各行の定義：画像のような横長のリスト */
                 .ccbm-listing {
-                    padding: 4px 0;
-                    margin: 2px 0;
-                    text-align: left !important;
+                    width: 100%;
+                    padding: 6px 16px;
+                    box-sizing: border-box;
+                    display: flex;
+                    align-items: center;
+                    justify-content: flex-start;
+                    border-bottom: 1px solid rgba(255,255,255,0.05);
                 }
 
-                /* ボタンを左固定、テキストをその右に配置 */
-                .ccbm-btn {
-                    margin: 0 10px 0 0 !important;
-                    min-width: 140px;
-                    display: inline-block;
-                    vertical-align: middle;
+                /* ボタンと入力欄の固定幅 */
+                .ccbm-control {
+                    min-width: 150px;
+                    margin-right: 15px;
+                    flex-shrink: 0;
                 }
 
+                /* 説明文のスタイル */
                 .ccbm-desc {
-                    display: inline;
-                    font-size: 11px;
+                    font-size: 12px;
                     color: #ccc;
-                    vertical-align: middle;
+                    line-height: 1.2;
                 }
 
                 .ccbm-input-time {
                     background: #000;
                     color: #fff;
-                    border: 1px solid #666;
-                    font-size: 14px;
-                    padding: 2px 4px;
-                    margin: 0 10px 0 0;
+                    border: 1px solid #444;
+                    font-size: 16px;
+                    padding: 3px 6px;
                     border-radius: 4px;
-                    vertical-align: middle;
+                    width: 140px;
+                    box-sizing: border-box;
                 }
 
                 .ccbm-disabled {
                     opacity: 0.2;
                     pointer-events: none;
+                    filter: grayscale(1);
+                }
+
+                /* ボタンが改行されないように */
+                .smallFancyButton.ccbm-btn {
+                    width: 100%;
+                    margin: 0 !important;
+                    text-align: center;
                 }
             `;
             document.head.appendChild(style);
@@ -126,37 +140,39 @@
 
         openMainMenu: function() {
             const ccacm = Game.mods['CCACM'];
-            if (!ccacm) {
-                Game.Prompt(`<h3>CCBM 統合設定</h3><div class="block">CCACMが見つかりません</div>`, ['閉じる']);
-                return;
-            }
+            if (!ccacm) return;
 
             const isEnabled = ccacm.config.enabled;
             let content = `
-                <h3>CCBM 統合設定</h3>
-                <div class="block ccbm-menu-container">
+                <div class="ccbm-menu-container">
                     
                     <div class="ccbm-section-title">CCACM (自動終了設定)</div>
 
                     <div class="ccbm-listing">
-                        <a class="option smallFancyButton ccbm-btn ${isEnabled ? 'on' : 'off'}" 
-                           onclick="Game.mods['CCACM'].toggleEnabled();">
-                            自動終了: ${isEnabled ? 'ON' : 'OFF'}
-                        </a>
-                        <label class="ccbm-desc">（指定時刻にゲームをセーブして自動的に終了します。）</label>
+                        <div class="ccbm-control">
+                            <a class="option smallFancyButton ccbm-btn ${isEnabled ? 'on' : 'off'}" 
+                               onclick="Game.mods['CCACM'].toggleEnabled();">
+                                自動終了: ${isEnabled ? 'ON' : 'OFF'}
+                            </a>
+                        </div>
+                        <div class="ccbm-desc">（指定時刻にゲームをセーブして自動的に終了します。）</div>
                     </div>
 
                     <div class="ccbm-listing ${isEnabled ? '' : 'ccbm-disabled'}">
-                        <input type="time" id="ccbm_target_time" class="ccbm-input-time" value="${ccacm.config.targetTime}">
-                        <label class="ccbm-desc">（終了させる時刻を設定します。24時間表記）</label>
+                        <div class="ccbm-control">
+                            <input type="time" id="ccbm_target_time" class="ccbm-input-time" value="${ccacm.config.targetTime}">
+                        </div>
+                        <div class="ccbm-desc">（終了させる時刻を設定します。24時間表記）</div>
                     </div>
 
                     <div class="ccbm-listing ${isEnabled ? '' : 'ccbm-disabled'}">
-                        <a class="option smallFancyButton ccbm-btn" 
-                           onclick="Game.mods['CCACM'].updateTime(l('ccbm_target_time').value);">
-                            時刻を保存
-                        </a>
-                        <label class="ccbm-desc">（設定した時刻を保存します。）</label>
+                        <div class="ccbm-control">
+                            <a class="option smallFancyButton ccbm-btn" 
+                               onclick="Game.mods['CCACM'].updateTime(l('ccbm_target_time').value);">
+                                時刻を保存
+                            </a>
+                        </div>
+                        <div class="ccbm-desc">（設定した時刻を保存します。）</div>
                     </div>
 
                 </div>
