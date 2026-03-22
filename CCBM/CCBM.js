@@ -1,6 +1,6 @@
 /*
     CCBM (Cookie Clicker Basic MOD)
-    v.1.1.8 - Authentic Full-Width List Layout
+    v.1.1.9 - Expanded Width & List Layout
 */
 
 (function() {
@@ -17,6 +17,7 @@
             const style = document.createElement('style');
             style.id = 'ccbm_styles';
             style.innerHTML = `
+                /* アイコンアニメーション */
                 @keyframes ccbmX_Extreme { from { left: -5px; } to { left: 5px; } }
                 @keyframes ccbmY_Extreme { from { transform: translateY(0px); } to { transform: translateY(-7px); } }
                 
@@ -50,11 +51,15 @@
                     pointer-events: auto;
                 }
 
-                /* --- リストレイアウトの再定義 --- */
+                /* --- ウィンドウサイズとリストの修正 --- */
+                #prompt {
+                    width: 700px !important; /* 横幅を大幅に拡大 */
+                    margin-left: -350px !important; /* 中央寄せの補正 */
+                }
+
                 .ccbm-menu-container {
                     text-align: left !important;
                     padding: 8px 0 !important;
-                    width: 100%;
                 }
 
                 .ccbm-section-title {
@@ -62,35 +67,30 @@
                     text-align: center;
                     color: #ecc606;
                     font-weight: bold;
-                    font-size: 16px;
+                    font-size: 14px;
                     margin: 10px 0;
                     padding-bottom: 5px;
                     border-bottom: 1px solid #444;
                 }
 
-                /* 各行の定義：画像のような横長のリスト */
                 .ccbm-listing {
-                    width: 100%;
-                    padding: 6px 16px;
-                    box-sizing: border-box;
-                    display: flex;
+                    padding: 8px 16px;
+                    display: flex; /* 横並びを強制 */
                     align-items: center;
-                    justify-content: flex-start;
                     border-bottom: 1px solid rgba(255,255,255,0.05);
                 }
 
-                /* ボタンと入力欄の固定幅 */
                 .ccbm-control {
-                    min-width: 150px;
-                    margin-right: 15px;
+                    width: 180px; /* ボタン側の幅を固定 */
                     flex-shrink: 0;
+                    margin-right: 20px;
                 }
 
-                /* 説明文のスタイル */
                 .ccbm-desc {
+                    flex-grow: 1; /* 残りの幅を説明文に使う */
                     font-size: 12px;
                     color: #ccc;
-                    line-height: 1.2;
+                    line-height: 1.4;
                 }
 
                 .ccbm-input-time {
@@ -98,19 +98,17 @@
                     color: #fff;
                     border: 1px solid #444;
                     font-size: 16px;
-                    padding: 3px 6px;
+                    padding: 4px 8px;
                     border-radius: 4px;
-                    width: 140px;
+                    width: 100%;
                     box-sizing: border-box;
                 }
 
                 .ccbm-disabled {
-                    opacity: 0.2;
+                    opacity: 0.25;
                     pointer-events: none;
-                    filter: grayscale(1);
                 }
 
-                /* ボタンが改行されないように */
                 .smallFancyButton.ccbm-btn {
                     width: 100%;
                     margin: 0 !important;
@@ -143,8 +141,10 @@
             if (!ccacm) return;
 
             const isEnabled = ccacm.config.enabled;
+            // タイトルを「CCBM 統合設定」に戻し、内容を構築
             let content = `
-                <div class="ccbm-menu-container">
+                <h3>CCBM 統合設定</h3>
+                <div class="block ccbm-menu-container">
                     
                     <div class="ccbm-section-title">CCACM (自動終了設定)</div>
 
@@ -155,14 +155,14 @@
                                 自動終了: ${isEnabled ? 'ON' : 'OFF'}
                             </a>
                         </div>
-                        <div class="ccbm-desc">（指定時刻にゲームをセーブして自動的に終了します。）</div>
+                        <div class="ccbm-desc">指定時刻にゲームをセーブして自動的にブラウザを終了（またはタブを閉鎖）します。</div>
                     </div>
 
                     <div class="ccbm-listing ${isEnabled ? '' : 'ccbm-disabled'}">
                         <div class="ccbm-control">
                             <input type="time" id="ccbm_target_time" class="ccbm-input-time" value="${ccacm.config.targetTime}">
                         </div>
-                        <div class="ccbm-desc">（終了させる時刻を設定します。24時間表記）</div>
+                        <div class="ccbm-desc">自動終了を実行させる時刻を設定します。24時間表記で入力してください。</div>
                     </div>
 
                     <div class="ccbm-listing ${isEnabled ? '' : 'ccbm-disabled'}">
@@ -172,7 +172,7 @@
                                 時刻を保存
                             </a>
                         </div>
-                        <div class="ccbm-desc">（設定した時刻を保存します。）</div>
+                        <div class="ccbm-desc">変更した時刻設定を保存します。保存しないと反映されません。</div>
                     </div>
 
                 </div>
