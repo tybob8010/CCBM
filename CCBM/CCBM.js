@@ -1,6 +1,6 @@
 /*
     CCBM (Cookie Clicker Basic MOD)
-    v.1.6.0 - Fixed Position & Click Logic (Reverted to v.1.5.7 Style)
+    v.1.6.1 - Restoration and Final Fix
 */
 
 (function() {
@@ -10,12 +10,11 @@
             const style = document.createElement('style');
             style.id = 'ccbm_styles';
             style.innerHTML = `
-                /* 揺れと回転の定義 */
                 @keyframes ccacmX_Extreme { from { left: -5px; } to { left: 5px; } }
                 @keyframes ccacmY_Extreme { from { transform: translateY(0px); } to { transform: translateY(-7px); } }
                 @keyframes ccacmRotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-                /* ベースコンテナ：画面に対して固定位置 (fixed) */
+                /* 位置を fixed に固定（勝手に動かさないよう固定） */
                 .ccbm-base { 
                     position: fixed !important; 
                     bottom: 50px !important; 
@@ -46,7 +45,6 @@
                 }
                 .ccbm-base:hover #ccbm_shine { opacity: 0.8; }
 
-                /* Prompt内の設定項目レイアウト */
                 .ccbm-prompt-container { text-align: left; padding: 10px; max-height: 400px; overflow-y: auto; }
                 .ccbm-button-row { margin: 8px 0; display: block; clear: both; }
                 .ccbm-dummy { display: none; }
@@ -69,7 +67,7 @@
             `;
             
             const icon = base.querySelector('#ccbm_icon_element');
-            // v.1.5.7 と同様のイベント登録
+            // クリックイベントを確実に実行（addEventListener の true オプションで最優先化）
             icon.addEventListener('click', (e) => {
                 PlaySound('snd/tick.mp3');
                 this.openMainMenu();
@@ -79,6 +77,7 @@
             document.body.appendChild(base);
         },
 
+        // ボタン生成処理を v.1.5.7 の動作に戻しました
         callBJWriteButton: function(buttonId, targetProp = null, desc, label = null, callback = null, targetElementName) {
             const bj = window.betterJapanese;
             if (!bj) return;
@@ -101,7 +100,9 @@
                     btn.innerText = desc + (bj.config[targetProp] ? ' ON' : ' OFF');
                     btn.className = `smallFancyButton option prefButton ${bj.config[targetProp] ? 'on' : 'off'}`;
                 }
-                if (typeof callback === 'function') callback();
+                if (typeof callback === 'function') {
+                    callback();
+                }
                 PlaySound('snd/tick.mp3');
             };
 
@@ -118,6 +119,7 @@
             const bj = window.betterJapanese;
             if (!bj) return;
 
+            // Prompt生成
             Game.Prompt(`
                 <h3>非公式日本語訳 詳細設定</h3>
                 <div class="ccbm-prompt-container">
@@ -129,7 +131,7 @@
             `, ['閉じる'], null, 'settingsList');
 
             const w = this.callBJWriteButton.bind(this);
-            w('openIgnoreWordList', null, '置き換え除外リスト', '単語指定', bj.openIgnorePrompt, 'dummyIgnore');
+            w('openIgnoreWordList', null, '置き換え除外リスト', '単語指定', () => { bj.openIgnorePrompt(); }, 'dummyIgnore');
             w('toggleShowSpoilerAlertButton', 'showSpoilerAlert', '除外リスト表示確認', 'ネタバレ防止', null, 'dummyIgnore');
             
             const settings = [
@@ -151,7 +153,7 @@
 
     Game.registerMod("CCBM", {
         init: function() {
-            // 描画後にアイコンを表示
+            // 初回ロード待機
             setTimeout(() => window.CCBM.drawIcon(), 1000);
         }
     });
