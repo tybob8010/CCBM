@@ -1,6 +1,6 @@
 /*
     CCBM (Cookie Clicker Basic MOD)
-    v.1.5.8 - Position Reverted & Click Logic Fix
+    v.1.6.0 - Fixed Position & Click Logic (Reverted to v.1.5.7 Style)
 */
 
 (function() {
@@ -10,17 +10,19 @@
             const style = document.createElement('style');
             style.id = 'ccbm_styles';
             style.innerHTML = `
+                /* 揺れと回転の定義 */
                 @keyframes ccacmX_Extreme { from { left: -5px; } to { left: 5px; } }
                 @keyframes ccacmY_Extreme { from { transform: translateY(0px); } to { transform: translateY(-7px); } }
                 @keyframes ccacmRotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-                /* 元の位置（左セクション内）に戻す設定 */
+                /* ベースコンテナ：画面に対して固定位置 (fixed) */
                 .ccbm-base { 
-                    position: absolute !important; 
+                    position: fixed !important; 
                     bottom: 50px !important; 
                     right: 5px !important; 
-                    width: 48px; height: 48px; 
-                    z-index: 1000; 
+                    width: 60px; height: 60px; 
+                    z-index: 10000000; 
+                    pointer-events: none; 
                 }
                 .ccbm-icon-shaker { 
                     position: absolute; width: 48px; height: 48px; 
@@ -31,18 +33,22 @@
                     background: url(img/icons.png) ${-4 * 48}px ${-0 * 48}px !important; 
                     cursor: pointer !important; 
                     filter: drop-shadow(0px 0px 4px #000) !important; 
+                    pointer-events: auto !important; 
+                    transition: transform 0.05s;
                 }
+                #ccbm_icon_element:active { transform: scale(0.9); }
                 
                 #ccbm_shine { 
-                    position: absolute; width: 60px; height: 60px; top: -10px; left: -5px; 
+                    position: absolute; width: 60px; height: 60px; top: -5px; left: -5px; 
                     background: url(img/shine.png) no-repeat center; background-size: contain; 
                     z-index: -1; opacity: 0; animation: ccacmRotate 20s infinite linear; 
                     pointer-events: none; transition: opacity 0.3s;
                 }
                 .ccbm-base:hover #ccbm_shine { opacity: 0.8; }
 
-                .ccbm-prompt-container { text-align: left; padding: 10px; }
-                .ccbm-button-row { margin: 8px 0; display: block; }
+                /* Prompt内の設定項目レイアウト */
+                .ccbm-prompt-container { text-align: left; padding: 10px; max-height: 400px; overflow-y: auto; }
+                .ccbm-button-row { margin: 8px 0; display: block; clear: both; }
                 .ccbm-dummy { display: none; }
             `;
             document.head.appendChild(style);
@@ -50,11 +56,6 @@
 
         drawIcon: function() {
             if (document.getElementById('ccbm_base')) return;
-            
-            // 元のターゲット（左側セクション）を指定
-            const target = l('sectionLeft');
-            if (!target) return;
-
             this.injectStyle();
             
             const base = document.createElement('div');
@@ -63,22 +64,19 @@
             base.innerHTML = `
                 <div id="ccbm_shine"></div>
                 <div class="ccbm-icon-shaker">
-                    <div id="ccbm_icon_element"></div>
+                    <div id="ccbm_icon_element" title="CCBM Settings"></div>
                 </div>
             `;
             
             const icon = base.querySelector('#ccbm_icon_element');
-            
-            // クリックイベント：Game.clickStr (onclick) を使わず、mousedown で即座に反応させる
-            // これにより、他のMODや本体のクリック阻害を回避しやすくなります
-            icon.onmousedown = (e) => {
+            // v.1.5.7 と同様のイベント登録
+            icon.addEventListener('click', (e) => {
                 PlaySound('snd/tick.mp3');
                 this.openMainMenu();
-                e.preventDefault(); 
                 e.stopPropagation();
-            };
+            }, true);
 
-            target.appendChild(base);
+            document.body.appendChild(base);
         },
 
         callBJWriteButton: function(buttonId, targetProp = null, desc, label = null, callback = null, targetElementName) {
@@ -97,8 +95,7 @@
             if (targetProp) btn.className += ` prefButton ${bj.config[targetProp] ? 'on' : 'off'}`;
             btn.innerText = desc + (targetProp ? (bj.config[targetProp] ? ' ON' : ' OFF') : '');
 
-            // ボタンのクリックも mousedown にして反応を確実に
-            btn.onmousedown = (e) => {
+            btn.onclick = () => {
                 if (targetProp) {
                     bj.toggleButton(buttonId, targetProp, desc);
                     btn.innerText = desc + (bj.config[targetProp] ? ' ON' : ' OFF');
@@ -106,7 +103,6 @@
                 }
                 if (typeof callback === 'function') callback();
                 PlaySound('snd/tick.mp3');
-                e.preventDefault();
             };
 
             container.appendChild(btn);
@@ -128,6 +124,7 @@
                     <div id="target_ignoreList"><div id="dummyIgnore" class="ccbm-dummy"></div></div>
                     <div class="line"></div>
                     <div id="target_settings"><div id="dummySetting" class="ccbm-dummy"></div></div>
+                    <div style="height:20px;"></div>
                 </div>
             `, ['閉じる'], null, 'settingsList');
 
@@ -137,7 +134,7 @@
             
             const settings = [
                 ['replaceBackgroundName', '背景名'],
-                ['replaceMarketQuote', '在庫市場'],
+                ['replaceMarketQuote', '在庫市場テキスト'],
                 ['replaceGardenImage', '菜園画像'],
                 ['replaceUpdateLog', '更新履歴'],
                 ['replaceSpecialUpgrades', '特殊アップグレード'],
@@ -146,7 +143,7 @@
                 ['beautifyAscendNumber', '昇天数短縮'],
                 ['replaceCSS', 'CSS(かぎ括弧)'],
                 ['replaceNews', 'ニュース欄'],
-                ['replaceOthers', 'その他改善']
+                ['replaceOthers', 'その他']
             ];
             settings.forEach(s => w('toggle' + s[0], s[0], s[1], null, null, 'dummySetting'));
         }
@@ -154,8 +151,8 @@
 
     Game.registerMod("CCBM", {
         init: function() {
-            // drawフックで毎回位置をチェックして描画
-            Game.registerHook('draw', () => { window.CCBM.drawIcon(); });
+            // 描画後にアイコンを表示
+            setTimeout(() => window.CCBM.drawIcon(), 1000);
         }
     });
 })();
