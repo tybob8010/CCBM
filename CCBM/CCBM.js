@@ -1,6 +1,6 @@
 /*
     CCBM (Cookie Clicker Basic MOD)
-    v.1.6.6
+    v.1.6.7
 */
 
 (function() {
@@ -65,11 +65,21 @@
                 <div id="ccbm_base" class="ccbm-base">
                     <div id="ccbm_shine"></div>
                     <div class="ccbm-icon-shaker">
-                        <div id="ccbm_icon_element" title="CCBM Settings" onclick="CCBM.openMainMenu(); PlaySound('snd/tick.mp3');"></div>
+                        <div id="ccbm_icon_element" title="CCBM Settings"></div>
                     </div>
                 </div>
             `;
             target.insertAdjacentHTML('beforeend', html);
+
+            const icon = document.getElementById('ccbm_icon_element');
+            if (icon) {
+                icon.onclick = () => {
+                    if (window.CCBM) {
+                        window.CCBM.openMainMenu();
+                    }
+                    PlaySound('snd/tick.mp3');
+                };
+            }
         },
 
         openMainMenu: function() {
