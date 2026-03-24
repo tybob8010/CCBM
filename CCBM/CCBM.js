@@ -1,6 +1,6 @@
 /*
     CCBM (Cookie Clicker Basic MOD)
-    v.1.5.7 - Click Event & Layering Fix
+    v.1.6.2 - Position Restored to sectionLeft
 */
 
 (function() {
@@ -15,14 +15,13 @@
                 @keyframes ccacmY_Extreme { from { transform: translateY(0px); } to { transform: translateY(-7px); } }
                 @keyframes ccacmRotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-                /* ベースコンテナ：最前面に配置し、中身だけクリック可能にする */
+                /* ベースコンテナ：一番左のセクション(sectionLeft)内での絶対配置に変更 */
                 .ccbm-base { 
-                    position: fixed !important; 
+                    position: absolute !important; 
                     bottom: 50px !important; 
                     right: 5px !important; 
                     width: 60px; height: 60px; 
-                    z-index: 10000000; /* 桁違いに大きく */
-                    pointer-events: none; 
+                    z-index: 1000; 
                 }
                 .ccbm-icon-shaker { 
                     position: absolute; width: 48px; height: 48px; 
@@ -33,7 +32,6 @@
                     background: url(img/icons.png) ${-4 * 48}px ${-0 * 48}px !important; 
                     cursor: pointer !important; 
                     filter: drop-shadow(0px 0px 4px #000) !important; 
-                    pointer-events: auto !important; /* これでクリックを有効化 */
                     transition: transform 0.05s;
                 }
                 #ccbm_icon_element:active { transform: scale(0.9); }
@@ -56,6 +54,11 @@
 
         drawIcon: function() {
             if (document.getElementById('ccbm_base')) return;
+            
+            // ターゲットを一番左のセクション(sectionLeft)に指定
+            const target = l('sectionLeft');
+            if (!target) return;
+
             this.injectStyle();
             
             const base = document.createElement('div');
@@ -68,18 +71,18 @@
                 </div>
             `;
             
-            // アイコンのクリックイベントを「addEventListener」で確実に登録
             const icon = base.querySelector('#ccbm_icon_element');
+            // クリックイベント
             icon.addEventListener('click', (e) => {
                 PlaySound('snd/tick.mp3');
                 this.openMainMenu();
                 e.stopPropagation();
             }, true);
 
-            document.body.appendChild(base); // sectionLeftではなくbodyに直接置く
+            // bodyではなく、指定したセクションに追加
+            target.appendChild(base);
         },
 
-        // 提示された writeButton を Prompt 用に最適化
         callBJWriteButton: function(buttonId, targetProp = null, desc, label = null, callback = null, targetElementName) {
             const bj = window.betterJapanese;
             if (!bj) return;
@@ -90,15 +93,12 @@
             let container = document.createElement('div');
             container.className = 'ccbm-button-row';
 
-            // ボタン生成
             let btn = document.createElement('a');
             btn.id = buttonId;
             btn.className = 'smallFancyButton option';
             if (targetProp) btn.className += ` prefButton ${bj.config[targetProp] ? 'on' : 'off'}`;
-            
             btn.innerText = desc + (targetProp ? (bj.config[targetProp] ? ' ON' : ' OFF') : '');
 
-            // 直接的なイベント登録
             btn.onclick = () => {
                 if (targetProp) {
                     bj.toggleButton(buttonId, targetProp, desc);
@@ -110,38 +110,28 @@
             };
 
             container.appendChild(btn);
-
             if (label) {
                 let lbl = document.createElement('label');
                 lbl.innerHTML = ` <small style="opacity:0.6;">(${label})</small>`;
                 container.appendChild(lbl);
             }
-
             targetElement.parentNode.insertBefore(container, targetElement);
         },
 
         openMainMenu: function() {
             const bj = window.betterJapanese;
-            if (!bj) {
-                Game.Prompt('<h3>エラー</h3><div class="block">BetterJapaneseが見つかりません。</div>', ['閉じる']);
-                return;
-            }
+            if (!bj) return;
 
             Game.Prompt(`
                 <h3>非公式日本語訳 詳細設定</h3>
                 <div class="ccbm-prompt-container">
-                    <div style="font-size:12px; margin-bottom:10px;">翻訳エンジンの詳細設定を管理します。</div>
-                    <div class="line"></div>
                     <div id="target_ignoreList"><div id="dummyIgnore" class="ccbm-dummy"></div></div>
                     <div class="line"></div>
                     <div id="target_settings"><div id="dummySetting" class="ccbm-dummy"></div></div>
-                    <div style="height:20px;"></div>
                 </div>
             `, ['閉じる'], null, 'settingsList');
 
             const w = this.callBJWriteButton.bind(this);
-            
-            // 各ボタンの生成
             w('openIgnoreWordList', null, '置き換え除外リスト', '単語指定', bj.openIgnorePrompt, 'dummyIgnore');
             w('toggleShowSpoilerAlertButton', 'showSpoilerAlert', '除外リスト表示確認', 'ネタバレ防止', null, 'dummyIgnore');
             
@@ -158,15 +148,14 @@
                 ['replaceNews', 'ニュース欄'],
                 ['replaceOthers', 'その他']
             ];
-
             settings.forEach(s => w('toggle' + s[0], s[0], s[1], null, null, 'dummySetting'));
         }
     };
 
     Game.registerMod("CCBM", {
         init: function() {
-            // ページロード完了後にアイコンを描画
+            // ゲーム画面の構築を待ってから配置
             setTimeout(() => window.CCBM.drawIcon(), 1000);
         }
     });
-})();d
+})();
