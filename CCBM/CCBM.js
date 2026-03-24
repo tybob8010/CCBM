@@ -1,33 +1,28 @@
 /*
     CCBM (Cookie Clicker Basic MOD)
-    v.1.4.0 - Critical Motion Fix (Using CCACM Extreme Motion)
+    v.1.4.1 - Perfect Motion & Shine Match
 */
 
 (function() {
     window.CCBM = {
-        // スタイル注入：ご提示いただいた「歯車の動き」を完全に再現
         injectStyle: function() {
             if (document.getElementById('ccbm_styles')) return;
             const style = document.createElement('style');
             style.id = 'ccbm_styles';
             style.innerHTML = `
-                /* --- 【重要】ご指定の「歯車の動き」アニメーション --- */
-                /* アイコンの揺れアニメーション（左右・極端） */
+                /* --- CCACM から完全移植したアニメーション --- */
                 @keyframes ccacmX_Extreme { from { left: -5px; } to { left: 5px; } }
-                /* アイコンの跳ねアニメーション（上下・鋭い） */
                 @keyframes ccacmY_Extreme { from { transform: translateY(0px); } to { transform: translateY(-7px); } }
-                /* 背後Shineの回転アニメーション */
                 @keyframes ccacmRotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-                /* ベースコンテナ */
                 .ccbm-base { 
                     position: absolute !important; 
                     bottom: 50px !important; 
                     right: 5px !important; 
                     width: 48px; height: 48px; z-index: 1000000; pointer-events: none; 
                 }
-                
-                /* アニメーション適用ラッパー：ここにご指定の数値を適用 */
+
+                /* アイコンの揺れ：0.6s と 0.3s の鋭い動き */
                 .ccbm-icon-shaker { 
                     position: absolute; width: 48px; height: 48px; z-index: 10; 
                     animation: 
@@ -47,14 +42,24 @@
                     filter: drop-shadow(0px 0px 6px rgba(255,255,255,0.7)) brightness(1.0) !important;
                 }
 
-                /* 回転する光 */
+                /* --- 背後の白い光 (Shine)：CCACM と完全一致 --- */
                 #ccbm_shine { 
-                    position: absolute; width: 60px; height: 60px; top: -10px; left: -5px; 
-                    background: url(img/shine.png) no-repeat center; background-size: contain; 
-                    z-index: 1; opacity: 0; animation: ccacmRotate 20s infinite linear; 
-                    pointer-events: none; transition: opacity 0.3s ease-out;
+                    position: absolute; 
+                    width: 60px; height: 60px; 
+                    top: -10px; left: -5px; 
+                    background: url(img/shine.png) no-repeat center; 
+                    background-size: contain; 
+                    z-index: 1; 
+                    opacity: 0; /* 通常時は透明 */
+                    animation: ccacmRotate 20s infinite linear; 
+                    pointer-events: none; 
+                    transition: opacity 0.3s ease-out; /* ふわっと浮き出る */
                 }
-                .ccbm-base:has(#ccbm_icon_element:hover) #ccbm_shine { opacity: 0.6; }
+
+                /* 歯車にマウスを乗せた時だけ背後のShineを表示（透明度 0.6） */
+                .ccbm-base:has(#ccbm_icon_element:hover) #ccbm_shine { 
+                    opacity: 0.6; 
+                }
 
                 /* --- ウィンドウ・リスト部分 (BetterJapanese Style) --- */
                 .ccbm-window { min-width: 550px !important; }
@@ -73,6 +78,7 @@
             const target = l('sectionLeft') || l('wrapper');
             if (!target) return;
             this.injectStyle();
+            
             const base = document.createElement('div');
             base.id = 'ccbm_base';
             base.className = 'ccbm-base';
@@ -82,10 +88,18 @@
                     <div id="ccbm_icon_element"></div>
                 </div>
             `;
+            
             const icon = base.querySelector('#ccbm_icon_element');
-            icon.onmouseover = () => { Game.tooltip.draw(icon, '<div style="padding:8px;width:180px;text-align:center;"><b>CCBM 統合設定</b><br>クリックで設定画面を開く</div>', 'this'); };
+            icon.onmouseover = () => { 
+                Game.tooltip.draw(icon, '<div style="padding:8px;width:180px;text-align:center;"><b>CCBM 統合設定</b><br>クリックで設定画面を開く</div>', 'this'); 
+            };
             icon.onmouseout = () => { Game.tooltip.hide(); };
-            icon.onclick = (e) => { PlaySound('snd/tick.mp3'); this.openMainMenu(); e.preventDefault(); e.stopPropagation(); };
+            icon.onclick = (e) => { 
+                PlaySound('snd/tick.mp3'); 
+                this.openMainMenu(); 
+                e.preventDefault(); 
+                e.stopPropagation(); 
+            };
             target.appendChild(base);
         },
 
@@ -125,7 +139,6 @@
 
     Game.registerMod("CCBM", {
         init: function() { 
-            // 描画ループでアイコンを表示
             Game.registerHook('draw', () => { window.CCBM.drawIcon(); }); 
         }
     });
