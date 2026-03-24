@@ -1,6 +1,6 @@
 /*
     CCBM (Cookie Clicker Basic MOD)
-    v.1.6.5 - Core Readiness & CCACM Sync
+    v.1.6.6
 */
 
 (function() {
@@ -73,24 +73,34 @@
         },
 
         openMainMenu: function() {
-            let html = `
+            Game.Prompt(`
                 <h3>CCBM Settings</h3>
                 <div class="ccbm-prompt-container">
-            `;
+                    <div id="ccbm_config_list"></div>
+                </div>
+            `, ['閉じる']);
+
+            const container = document.getElementById('ccbm_config_list');
+            if (!container) return;
 
             this.configs.forEach(cfg => {
-                html += `
-                    <div class="ccbm-button-row">
-                        <a class="smallFancyButton option" onclick="(${cfg.callback})(); PlaySound('snd/tick.mp3');">
-                            ${cfg.name}
-                        </a>
-                    </div>
-                `;
+                const row = document.createElement('div');
+                row.className = 'ccbm-button-row';
+
+                const btn = document.createElement('a');
+                btn.className = 'smallFancyButton option';
+                btn.textContent = cfg.name;
+
+                btn.onclick = () => {
+                    if (typeof cfg.callback === 'function') {
+                        cfg.callback();
+                    }
+                    PlaySound('snd/tick.mp3');
+                };
+
+                row.appendChild(btn);
+                container.appendChild(row);
             });
-
-            html += `</div>`;
-
-            Game.Prompt(html, ['閉じる']);
         }
     };
 
