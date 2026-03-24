@@ -4,9 +4,14 @@
 */
 
 (function() {
-    // CCACMがCCBMを探せるように、即座にオブジェクトを定義
     window.CCBM = window.CCBM || {
-        isReady: true, // CCACMへの準備完了フラグ
+        isReady: true,
+
+        configs: [],
+
+        registerConfig: function(id, name, callback) {
+            this.configs.push({ id, name, callback });
+        },
         
         injectStyle: function() {
             if (document.getElementById('ccbm_styles')) return;
@@ -50,7 +55,6 @@
         },
 
         drawIcon: function() {
-            // 要素が既に存在するか、ターゲットがまだ無い場合はスキップ
             if (document.getElementById('ccbm_base')) return;
             const target = l('sectionLeft');
             if (!target) return;
@@ -68,77 +72,30 @@
             target.insertAdjacentHTML('beforeend', html);
         },
 
-        callBJWriteButton: function(buttonId, targetProp, desc, label, callback, targetElementName) {
-            const bj = window.betterJapanese;
-            if (!bj) return;
-
-            let targetElement = l(targetElementName);
-            if (!targetElement) return;
-
-            let container = document.createElement('div');
-            container.className = 'ccbm-button-row';
-
-            let btn = document.createElement('a');
-            btn.id = buttonId;
-            btn.className = 'smallFancyButton option';
-            if (targetProp) btn.className += ` prefButton ${bj.config[targetProp] ? 'on' : 'off'}`;
-            btn.innerText = desc + (targetProp ? (bj.config[targetProp] ? ' ON' : ' OFF') : '');
-
-            btn.onclick = () => {
-                if (targetProp) {
-                    bj.toggleButton(buttonId, targetProp, desc);
-                    btn.innerText = desc + (bj.config[targetProp] ? ' ON' : ' OFF');
-                    btn.className = `smallFancyButton option prefButton ${bj.config[targetProp] ? 'on' : 'off'}`;
-                }
-                if (typeof callback === 'function') callback();
-                PlaySound('snd/tick.mp3');
-            };
-
-            container.appendChild(btn);
-            if (label) {
-                let lbl = document.createElement('label');
-                lbl.innerHTML = ` <small style="opacity:0.6;">(${label})</small>`;
-                container.appendChild(lbl);
-            }
-            targetElement.parentNode.insertBefore(container, targetElement);
-        },
-
         openMainMenu: function() {
-            const bj = window.betterJapanese;
-            if (!bj) {
-                Game.Prompt('<h3>エラー</h3>BetterJapaneseが見つかりません。', ['閉じる']);
-                return;
-            }
-
-            Game.Prompt(`
-                <h3>非公式日本語訳 詳細設定</h3>
+            let html = `
+                <h3>CCBM Settings</h3>
                 <div class="ccbm-prompt-container">
-                    <div id="target_ignoreList"><div id="dummyIgnore" style="display:none;"></div></div>
-                    <div class="line"></div>
-                    <div id="target_settings"><div id="dummySetting" style="display:none;"></div></div>
-                </div>
-            `, ['閉じる'], null, 'settingsList');
+            `;
 
-            const w = this.callBJWriteButton.bind(this);
-            w('openIgnoreWordList', null, '置き換え除外リスト', '単語指定', () => { bj.openIgnorePrompt(); }, 'dummyIgnore');
-            w('toggleShowSpoilerAlertButton', 'showSpoilerAlert', '除外リスト表示確認', 'ネタバレ防止', null, 'dummyIgnore');
-            
-            const settings = [
-                ['replaceBackgroundName', '背景名'], ['replaceMarketQuote', '在庫市場テキスト'],
-                ['replaceGardenImage', '菜園画像'], ['replaceUpdateLog', '更新履歴'],
-                ['replaceSpecialUpgrades', '特殊アップグレード'], ['replacePurchasedTag', '特殊タグ'],
-                ['replaceBuildings', '施設固有表現'], ['beautifyAscendNumber', '昇天数短縮'],
-                ['replaceCSS', 'CSS(かぎ括弧)'], ['replaceNews', 'ニュース欄'],
-                ['replaceOthers', 'その他改善']
-            ];
-            settings.forEach(s => w('toggle' + s[0], s[0], s[1], null, null, 'dummySetting'));
+            this.configs.forEach(cfg => {
+                html += `
+                    <div class="ccbm-button-row">
+                        <a class="smallFancyButton option" onclick="(${cfg.callback})(); PlaySound('snd/tick.mp3');">
+                            ${cfg.name}
+                        </a>
+                    </div>
+                `;
+            });
+
+            html += `</div>`;
+
+            Game.Prompt(html, ['閉じる']);
         }
     };
 
-    // MODとして登録
     Game.registerMod("CCBM", {
         init: function() {
-            // ゲームの描画サイクルに乗せて、確実にアイコンを表示させ続ける
             Game.registerHook('draw', () => {
                 window.CCBM.drawIcon();
             });
