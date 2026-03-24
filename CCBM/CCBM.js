@@ -1,10 +1,13 @@
 /*
     CCBM (Cookie Clicker Basic MOD)
-    v.1.6.4 - CCACM Logic Sync (Reliable Window)
+    v.1.6.5 - Core Readiness & CCACM Sync
 */
 
 (function() {
-    window.CCBM = {
+    // CCACMがCCBMを探せるように、即座にオブジェクトを定義
+    window.CCBM = window.CCBM || {
+        isReady: true, // CCACMへの準備完了フラグ
+        
         injectStyle: function() {
             if (document.getElementById('ccbm_styles')) return;
             const style = document.createElement('style');
@@ -47,13 +50,13 @@
         },
 
         drawIcon: function() {
+            // 要素が既に存在するか、ターゲットがまだ無い場合はスキップ
             if (document.getElementById('ccbm_base')) return;
             const target = l('sectionLeft');
             if (!target) return;
 
             this.injectStyle();
             
-            // CCACMと同じく、insertAdjacentHTMLで直接onclickを流し込む
             const html = `
                 <div id="ccbm_base" class="ccbm-base">
                     <div id="ccbm_shine"></div>
@@ -65,7 +68,7 @@
             target.insertAdjacentHTML('beforeend', html);
         },
 
-        callBJWriteButton: function(buttonId, targetProp = null, desc, label = null, callback = null, targetElementName) {
+        callBJWriteButton: function(buttonId, targetProp, desc, label, callback, targetElementName) {
             const bj = window.betterJapanese;
             if (!bj) return;
 
@@ -81,7 +84,6 @@
             if (targetProp) btn.className += ` prefButton ${bj.config[targetProp] ? 'on' : 'off'}`;
             btn.innerText = desc + (targetProp ? (bj.config[targetProp] ? ' ON' : ' OFF') : '');
 
-            // ボタンクリックも確実な方式へ
             btn.onclick = () => {
                 if (targetProp) {
                     bj.toggleButton(buttonId, targetProp, desc);
@@ -103,7 +105,10 @@
 
         openMainMenu: function() {
             const bj = window.betterJapanese;
-            if (!bj) return;
+            if (!bj) {
+                Game.Prompt('<h3>エラー</h3>BetterJapaneseが見つかりません。', ['閉じる']);
+                return;
+            }
 
             Game.Prompt(`
                 <h3>非公式日本語訳 詳細設定</h3>
@@ -130,10 +135,13 @@
         }
     };
 
+    // MODとして登録
     Game.registerMod("CCBM", {
         init: function() {
-            // drawフックで描画を監視し、消えたら再描画する（CCACMと同様の堅牢な仕組み）
-            Game.registerHook('draw', () => { window.CCBM.drawIcon(); });
+            // ゲームの描画サイクルに乗せて、確実にアイコンを表示させ続ける
+            Game.registerHook('draw', () => {
+                window.CCBM.drawIcon();
+            });
         }
     });
 })();
