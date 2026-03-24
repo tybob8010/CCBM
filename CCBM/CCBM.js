@@ -1,6 +1,6 @@
 /*
     CCBM (Cookie Clicker Basic MOD)
-    v.1.5.5 - Absolute Integration with BetterJapanese Logic
+    v.1.5.6 - Click Interaction Fix
 */
 
 (function() {
@@ -27,7 +27,9 @@
                     cursor: pointer !important; filter: drop-shadow(0px 0px 4px #000) !important; 
                     position: relative; z-index: 20; pointer-events: auto; transition: filter 0.1s;
                 }
-                #ccbm_icon_element:hover { filter: drop-shadow(0px 0px 6px rgba(255,255,255,0.7)) !important; }
+                #ccbm_icon_element:hover { filter: drop-shadow(0px 0px 6px rgba(255,255,255,0.7)) brightness(1.1) !important; }
+                
+                /* 背後の光 */
                 #ccbm_shine { 
                     position: absolute; width: 60px; height: 60px; top: -10px; left: -5px; 
                     background: url(img/shine.png) no-repeat center; background-size: contain; 
@@ -36,9 +38,10 @@
                 }
                 .ccbm-base:has(#ccbm_icon_element:hover) #ccbm_shine { opacity: 0.6; }
 
-                /* Prompt Adjustments */
+                /* Prompt UI */
                 .ccbm-prompt-container { text-align: left; padding: 10px; }
-                .ccbm-dummy { display: inline-block; width: 0; height: 0; }
+                .ccbm-dummy { display: block; height: 0; visibility: hidden; }
+                .settingsList .option { margin-bottom: 4px; display: inline-block; }
             `;
             document.head.appendChild(style);
         },
@@ -53,11 +56,18 @@
             base.className = 'ccbm-base';
             base.innerHTML = `<div id="ccbm_shine"></div><div class="ccbm-icon-shaker"><div id="ccbm_icon_element"></div></div>`;
             const icon = base.querySelector('#ccbm_icon_element');
-            icon.onclick = (e) => { PlaySound('snd/tick.mp3'); this.openMainMenu(); e.preventDefault(); e.stopPropagation(); };
+            
+            // アイコン自体のクリックイベント
+            icon.onclick = (e) => { 
+                PlaySound('snd/tick.mp3'); 
+                this.openMainMenu(); 
+                e.preventDefault(); 
+                e.stopPropagation(); 
+            };
             target.appendChild(base);
         },
 
-        // 提示された BetterJapanese の writeButton を CCBM 内で再現 (thisをbjに固定して実行)
+        // 提示された BetterJapanese の writeButton ロジックを Prompt 内で確実に実行させるための修正
         callBJWriteButton: function(buttonId, targetProp = null, desc, label = null, callback = null, targetElementName) {
             const bj = window.betterJapanese;
             if (!bj) return;
@@ -65,25 +75,32 @@
             let targetElement = l(targetElementName);
             if (!targetElement) return;
 
+            // 改行
             targetElement.parentNode.insertBefore(document.createElement('br'), targetElement);
 
+            // ボタン生成
             let elementButton = document.createElement('a');
             elementButton.className = 'smallFancyButton option';
-            // bj.config を参照するように修正
             if (targetProp) elementButton.className += ` prefButton ${bj.config[targetProp] ? 'on' : 'off'}`;
             elementButton.id = buttonId;
 
-            let onclickStr = targetProp ? `betterJapanese.toggleButton('${buttonId}', '${targetProp}', '${desc}');` : '';
-            if (callback && typeof callback === 'function') onclickStr += `(${callback.toString()})()`;
+            // クリックイベントの直接付与 (文字列属性ではなく関数として設定)
+            elementButton.onclick = function() {
+                if (targetProp) bj.toggleButton(buttonId, targetProp, desc);
+                if (callback && typeof callback === 'function') callback();
+                PlaySound('snd/tick.mp3');
+            };
 
-            elementButton.setAttribute(Game.clickStr, onclickStr);
             elementButton.innerText = desc;
             if (targetProp) elementButton.innerText += ` ${bj.config[targetProp] ? loc('ON') : loc('OFF')}`;
 
             targetElement.parentNode.insertBefore(elementButton, targetElement);
 
+            // ラベル生成
             if (label) {
                 let elementLabel = document.createElement('label');
+                elementLabel.style.fontSize = '12px';
+                elementLabel.style.opacity = '0.7';
                 elementLabel.innerText = ` (${label})`;
                 targetElement.parentNode.insertBefore(elementLabel, targetElement);
             }
@@ -96,17 +113,18 @@
             Game.Prompt(`
                 <h3>非公式日本語訳 詳細設定</h3>
                 <div class="ccbm-prompt-container">
-                    <div>ゲームの処理を変更している翻訳処理について利用するか設定できます。</div>
-                    ${!bj.config.replaceJP ? '<p style="color: red; font-weight: bold;">「日本語訳の改善」がオフのため、下記の設定は無効です。</p>' : ''}
+                    <div style="font-size:12px; opacity:0.8;">ゲームの処理を変更している翻訳処理について利用するか設定できます。</div>
+                    ${!bj.config.replaceJP ? '<p style="color: #ff4444; font-weight: bold; margin: 8px 0;">「日本語訳の改善」がオフのため、下記の設定は無効です。</p>' : ''}
                     <div class="line"></div>
                     <div id="target_ignoreList"><div id="dummyIgnore" class="ccbm-dummy"></div></div>
                     <div class="line"></div>
+                    <div style="font-size:11px; margin-bottom:8px;">※設定の変更は再起動後に適用されます。</div>
                     <div id="target_settings"><div id="dummySetting" class="ccbm-dummy"></div></div>
                 </div>
             `, ['閉じる'], null, 'settingsList');
 
-            // 提示されたロジックに基づき、ダミー要素の手前にボタンを挿入していく
-            const w = this.callBJWriteButton;
+            // ボタンの描画実行
+            const w = this.callBJWriteButton.bind(this);
             
             w('openIgnoreWordList', null, '置き換え除外リスト', '非公式翻訳に置き換えたくない単語を指定することができます。', bj.openIgnorePrompt, 'dummyIgnore');
             w('toggleShowSpoilerAlertButton', 'showSpoilerAlert', '除外リスト表示確認', '除外リストを表示する際にネタバレに対する確認を表示します。', null, 'dummyIgnore');
@@ -126,6 +144,9 @@
     };
 
     Game.registerMod("CCBM", {
-        init: function() { Game.registerHook('draw', () => { window.CCBM.drawIcon(); }); }
+        init: function() { 
+            // 確実にアイコンが表示されるように draw フックを使用
+            Game.registerHook('draw', () => { window.CCBM.drawIcon(); }); 
+        }
     });
 })();
