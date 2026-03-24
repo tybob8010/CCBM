@@ -108,32 +108,61 @@
             if (!ccacm) return;
             const isEnabled = ccacm.config.enabled;
 
-            let content = `
-                <div class="ccbm-section-title">CCACM (自動終了設定)</div>
-                <div class="ccbm-list-item">
-                    <div class="ccbm-op-area">
-                        <a class="option smallFancyButton ${isEnabled ? 'on' : 'off'}" style="width:130px; margin:0;" onclick="Game.mods['CCACM'].toggleEnabled(); Game.ClosePrompt(); Game.mods['CCBM'].openMainMenu();">
-                            自動終了：${isEnabled ? 'ON' : 'OFF'}
-                        </a>
-                    </div>
-                    <div class="ccbm-desc-area">（指定時刻にゲームをセーブして自動的に終了します。）</div>
+            // let content = `
+            //     <div class="ccbm-section-title">CCACM (自動終了設定)</div>
+            //     <div class="ccbm-list-item">
+            //         <div class="ccbm-op-area">
+            //             <a class="option smallFancyButton ${isEnabled ? 'on' : 'off'}" style="width:130px; margin:0;" onclick="Game.mods['CCACM'].toggleEnabled(); Game.ClosePrompt(); Game.mods['CCBM'].openMainMenu();">
+            //                 自動終了：${isEnabled ? 'ON' : 'OFF'}
+            //             </a>
+            //         </div>
+            //         <div class="ccbm-desc-area">（指定時刻にゲームをセーブして自動的に終了します。）</div>
+            //     </div>
+            //     <div class="ccbm-list-item" style="${isEnabled ? '' : 'opacity:0.3; pointer-events:none;'}">
+            //         <div class="ccbm-op-area">
+            //             <input type="time" id="ccbm_time_in" class="ccbm-input-time" value="${ccacm.config.targetTime}">
+            //         </div>
+            //         <div class="ccbm-desc-area">（自動終了を実行させる時刻を設定します。）</div>
+            //     </div>
+            //     <div class="ccbm-list-item" style="${isEnabled ? '' : 'opacity:0.3; pointer-events:none;'}">
+            //         <div class="ccbm-op-area">
+            //             <a class="option smallFancyButton" style="width:130px; margin:0;" onclick="Game.mods['CCACM'].updateTime(l('ccbm_time_in').value); PlaySound('snd/tick.mp3');">
+            //                 設定を保存
+            //             </a>
+            //         </div>
+            //         <div class="ccbm-desc-area">（入力した時刻をシステムに反映させます。）</div>
+            //     </div>
+            // `;
+            // Game.Prompt(`<h3>CCBM 統合設定</h3>` + content, ['閉じる'], null, 'ccbm-window');
+
+            Game.Prompt(`
+                <h3>非公式日本語訳 詳細設定</h3>
+                <div>ゲームの処理を変更している翻訳処理について利用するか設定できます。<br>バグがあった場合、これらの翻訳はゲーム内容に影響を及ぼす可能性があります。</div>
+                ${!betterJapanese.config.replaceJP ? '<div class="line"></div><p style="color: red; font-weight: bold;">「日本語訳の改善」がオフのため、下記の設定はすべてオフとして処理されます。</p>' : ''}
+                <div class="line"></div>
+                <div class="listing" style="width: 100%; text-align: left; padding: 0px 10px;">
+                    <div id="dummyIgnoreListJP"></div>
                 </div>
-                <div class="ccbm-list-item" style="${isEnabled ? '' : 'opacity:0.3; pointer-events:none;'}">
-                    <div class="ccbm-op-area">
-                        <input type="time" id="ccbm_time_in" class="ccbm-input-time" value="${ccacm.config.targetTime}">
-                    </div>
-                    <div class="ccbm-desc-area">（自動終了を実行させる時刻を設定します。）</div>
+                <div class="line"></div>
+                <div>これらの設定の変更は再起動後に適用されます。</div>
+                <div class="listing" style="width: 100%; text-align: left; padding: 0px 10px;">
+                    <div id="dummySettingJP"></div>
                 </div>
-                <div class="ccbm-list-item" style="${isEnabled ? '' : 'opacity:0.3; pointer-events:none;'}">
-                    <div class="ccbm-op-area">
-                        <a class="option smallFancyButton" style="width:130px; margin:0;" onclick="Game.mods['CCACM'].updateTime(l('ccbm_time_in').value); PlaySound('snd/tick.mp3');">
-                            設定を保存
-                        </a>
-                    </div>
-                    <div class="ccbm-desc-area">（入力した時刻をシステムに反映させます。）</div>
-                </div>
-            `;
-            Game.Prompt(`<h3>CCBM 統合設定</h3>` + content, ['閉じる'], null, 'ccbm-window');
+            `, ['閉じる'], null, 'settingsList')
+
+            betterJapanese.writeButton('openIgnoreWordList', null, '置き換え除外リスト', '非公式翻訳に置き換えたくない単語を指定することができます。', betterJapanese.openIgnorePrompt, 'dummyIgnoreListJP')
+            betterJapanese.writeButton('toggleShowSpoilerAlertButton', 'showSpoilerAlert', '除外リスト表示確認', '除外リストを表示する際にネタバレに対する確認を表示します。', null, 'dummyIgnoreListJP')
+            betterJapanese.writeButton('toggleReplaceBackgroundNameButton', 'replaceBackgroundName', '背景名', '背景の名前を翻訳します。', null, 'dummySettingJP')
+            betterJapanese.writeButton('toggleReplaceMarketQuoteButton', 'replaceMarketQuote', '在庫市場のフレーバーテキスト', '在庫市場のフレーバーテキストを翻訳し、日本語で表示されるようにします。', null, 'dummySettingJP')
+            betterJapanese.writeButton('toggleReplaceGardenImageButton', 'replaceGardenImage', '菜園情報の画像', '菜園情報内で表示される画像を日本語のものに置き換えます。', null, 'dummySettingJP')
+            betterJapanese.writeButton('toggleReplaceUpdateLogButton', 'replaceUpdateLog', '情報欄及び更新履歴', '情報欄を詳しい内容に置き換え、更新履歴の日本語版を追加します。', null, 'dummySettingJP')
+            betterJapanese.writeButton('toggleReplaceSpecialUpgradesButton', 'replaceSpecialUpgrades', '特殊なアップグレード', 'アップグレードに英語以外では存在しない特殊なフレーバーテキストや概要を追加します。', null, 'dummySettingJP')
+            betterJapanese.writeButton('toggleReplacePurchasedTagButton', 'replacePurchasedTag', '特殊なタグ', '英語以外では変化しない特殊なタグを追加します。', null, 'dummySettingJP')
+            betterJapanese.writeButton('toggleReplaceBuildingsButton', 'replaceBuildings', '施設固有の表現', '一部の説明欄において施設によって異なる表現を追加します。', null, 'dummySettingJP')
+            betterJapanese.writeButton('toggleBeautifyAscendNumber', 'beautifyAscendNumber', 'ヘブンリーチップスの短縮表記', '画面右上および転生時のヘブンリーチップス入手数を短縮表記にし、改行しないようにします。', null, 'dummySettingJP')
+            betterJapanese.writeButton('toggleReplaceCSSButton', 'replaceCSS', 'CSSの変更', 'フレーバーテキストの囲み文字をかぎ括弧に変更します。', null, 'dummySettingJP')
+            betterJapanese.writeButton('toggleReplaceNewsButton', 'replaceNews', 'ニュース欄の改善', 'ニュース欄の挙動および翻訳を置き換えます。', null, 'dummySettingJP')
+            betterJapanese.writeButton('toggleReplaceOthersButton', 'replaceOthers', 'そのほか微小な改善', 'ツールチップなどの翻訳を置き換えます。', null, 'dummySettingJP')
         }
     };
 
