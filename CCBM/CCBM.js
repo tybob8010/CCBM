@@ -1,6 +1,6 @@
 /*
     CCBM (Cookie Clicker Basic MOD)
-    v.1.8.1
+    v.1.8.2
 */
 
 (function() {
@@ -29,46 +29,81 @@
             this.needsReload = true;
             this.openMainMenu();
         },
+
+        handleClose: function() {
+            if (this.needsReload) {
+                Game.WriteSave();
+                setTimeout(() => location.reload(), 300);
+            }
+        },
         
         injectStyle: function() {
             if (document.getElementById('ccbm_styles')) return;
+
             const style = document.createElement('style');
             style.id = 'ccbm_styles';
             style.innerHTML = `
-                @keyframes ccacmX_Extreme { from { left: -5px; } to { left: 5px; } }
-                @keyframes ccacmY_Extreme { from { transform: translateY(0px); } to { transform: translateY(-7px); } }
-                @keyframes ccacmRotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-
-                .ccbm-base { 
-                    position: absolute !important; 
-                    bottom: 50px !important; 
-                    right: 5px !important; 
-                    width: 60px; height: 60px; 
-                    z-index: 1000000; 
+                @keyframes ccacmX_Extreme {
+                    from { left: -5px; }
+                    to { left: 5px; }
                 }
 
-                .ccbm-icon-shaker { 
-                    position: absolute; width: 48px; height: 48px; 
-                    animation: ccacmX_Extreme 0.6s infinite alternate ease-in-out, 
-                               ccacmY_Extreme 0.3s infinite alternate ease-in-out; 
+                @keyframes ccacmY_Extreme {
+                    from { transform: translateY(0px); }
+                    to { transform: translateY(-7px); }
                 }
 
-                #ccbm_icon_element { 
-                    width: 48px !important; height: 48px !important; 
-                    background: url(img/icons.png) ${-4 * 48}px ${-0 * 48}px !important; 
-                    cursor: pointer !important; 
-                    filter: drop-shadow(0px 0px 4px #000) !important; 
+                @keyframes ccacmRotate {
+                    from { transform: rotate(0deg); }
+                    to { transform: rotate(360deg); }
                 }
 
-                #ccbm_shine { 
-                    position: absolute; width: 60px; height: 60px; top: -5px; left: -5px; 
-                    background: url(img/shine.png) no-repeat center; background-size: contain; 
-                    z-index: -1; opacity: 0; 
-                    animation: ccacmRotate 20s infinite linear; 
-                    pointer-events: none; transition: opacity 0.3s;
+                .ccbm-base {
+                    position: absolute !important;
+                    bottom: 50px !important;
+                    right: 5px !important;
+                    width: 48px;
+                    height: 48px;
+                    z-index: 1000000;
                 }
 
-                .ccbm-base:hover #ccbm_shine { opacity: 0.8; }
+                .ccbm-icon-shaker {
+                    position: relative;
+                    width: 48px;
+                    height: 48px;
+                    animation:
+                        ccacmX_Extreme 0.6s infinite alternate ease-in-out,
+                        ccacmY_Extreme 0.3s infinite alternate ease-in-out;
+                }
+
+                #ccbm_icon_element {
+                    width: 48px !important;
+                    height: 48px !important;
+                    background: url(img/icons.png) ${-4 * 48}px ${-0 * 48}px !important;
+                    cursor: pointer !important;
+                    filter: drop-shadow(0px 0px 4px #000) !important;
+                    position: relative;
+                    z-index: 10;
+                }
+
+                #ccbm_shine {
+                    position: absolute;
+                    width: 60px;
+                    height: 60px;
+                    top: -10px;
+                    left: -5px;
+                    background: url(img/shine.png) no-repeat center;
+                    background-size: contain;
+                    z-index: 1;
+                    opacity: 0;
+                    animation: ccacmRotate 20s infinite linear;
+                    pointer-events: none;
+                }
+
+                .ccbm-base:hover #ccbm_shine {
+                    opacity: 0.6;
+                    transition: opacity 0.3s ease-out;
+                }
 
                 .ccbm-row {
                     display:flex;
@@ -82,28 +117,34 @@
 
         drawIcon: function() {
             if (document.getElementById('ccbm_base')) return;
+
             const target = l('sectionLeft');
             if (!target) return;
 
             this.injectStyle();
-            
-            const html = `
-                <div id="ccbm_base" class="ccbm-base">
-                    <div id="ccbm_shine"></div>
-                    <div class="ccbm-icon-shaker">
-                        <div id="ccbm_icon_element" title="CCBM Settings"></div>
-                    </div>
-                </div>
-            `;
-            target.insertAdjacentHTML('beforeend', html);
 
-            const icon = document.getElementById('ccbm_icon_element');
-            if (icon) {
-                icon.onclick = () => {
-                    this.openMainMenu();
-                    PlaySound('snd/tick.mp3');
-                };
-            }
+            const base = document.createElement('div');
+            base.id = 'ccbm_base';
+            base.className = 'ccbm-base';
+
+            const shine = document.createElement('div');
+            shine.id = 'ccbm_shine';
+
+            const shaker = document.createElement('div');
+            shaker.className = 'ccbm-icon-shaker';
+
+            const icon = document.createElement('div');
+            icon.id = 'ccbm_icon_element';
+
+            icon.onclick = () => {
+                this.openMainMenu();
+                PlaySound('snd/tick.mp3');
+            };
+
+            shaker.appendChild(icon);
+            base.appendChild(shine);
+            base.appendChild(shaker);
+            target.appendChild(base);
         },
 
         openMainMenu: function() {
@@ -122,7 +163,6 @@
 
             const list = l('ccbm_config_list');
             const content = l('ccbm_config_content');
-            if (!list || !content) return;
 
             this.configs.forEach(cfg => {
                 const row = document.createElement('div');
@@ -155,13 +195,6 @@
                 oldClose();
                 Game.ClosePrompt = oldClose;
             };
-        },
-
-        handleClose: function() {
-            if (this.needsReload) {
-                Game.WriteSave();
-                setTimeout(() => location.reload(), 300);
-            }
         }
     };
 
