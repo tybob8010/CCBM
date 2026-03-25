@@ -19,8 +19,6 @@
 
             this.removedMods[id] = 1;
 
-            this.configs = this.configs.filter(c => c.id !== id);
-
             if (Game.mods[id]) {
                 delete Game.mods[id];
             }
