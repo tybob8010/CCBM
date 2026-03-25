@@ -1,6 +1,6 @@
 /*
     CCBM (Cookie Clicker Basic MOD)
-    v.1.7.0
+    v.1.7.1
 */
 
 (function() {
@@ -11,6 +11,13 @@
 
         registerConfig: function(id, name, callback) {
             this.configs.push({ id, name, callback });
+        },
+
+        removeMod: function(id) {
+            Game.Notify('MOD削除', id + ' を削除しました（リロード推奨）', [16, 5], 2);
+            this.configs = this.configs.filter(c => c.id !== id);
+            delete Game.mods[id];
+            this.openMainMenu();
         },
         
         injectStyle: function() {
@@ -29,27 +36,51 @@
                     width: 60px; height: 60px; 
                     z-index: 1000000; 
                 }
+
                 .ccbm-icon-shaker { 
                     position: absolute; width: 48px; height: 48px; 
                     animation: ccacmX_Extreme 0.6s infinite alternate ease-in-out, ccacmY_Extreme 0.3s infinite alternate ease-in-out; 
                 }
+
                 #ccbm_icon_element { 
                     width: 48px !important; height: 48px !important; 
                     background: url(img/icons.png) ${-4 * 48}px ${-0 * 48}px !important; 
                     cursor: pointer !important; 
                     filter: drop-shadow(0px 0px 4px #000) !important; 
                 }
-                
+
                 #ccbm_shine { 
                     position: absolute; width: 60px; height: 60px; top: -5px; left: -5px; 
                     background: url(img/shine.png) no-repeat center; background-size: contain; 
                     z-index: -1; opacity: 0; animation: ccacmRotate 20s infinite linear; 
                     pointer-events: none; transition: opacity 0.3s;
                 }
+
                 .ccbm-base:hover #ccbm_shine { opacity: 0.8; }
 
-                .ccbm-prompt-container { padding: 10px; }
-                .ccbm-button-row { margin: 6px 0; }
+                .ccbm-prompt-container { padding: 10px; text-align:left; }
+
+                .ccbm-row {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    margin: 4px 0;
+                }
+
+                .ccbm-mod-name {
+                    font-weight: bold;
+                }
+
+                .ccbm-delete {
+                    color: #f66;
+                    cursor: pointer;
+                    font-size: 12px;
+                }
+
+                .ccbm-delete:hover {
+                    color: #f00;
+                    text-decoration: underline;
+                }
             `;
             document.head.appendChild(style);
         },
@@ -95,22 +126,27 @@
 
             this.configs.forEach(cfg => {
                 const row = document.createElement('div');
-                row.className = 'ccbm-button-row';
+                row.className = 'ccbm-row';
 
-                const btn = document.createElement('a');
-                btn.className = 'smallFancyButton option';
-                btn.textContent = cfg.name;
+                const name = document.createElement('span');
+                name.className = 'ccbm-mod-name';
+                name.textContent = cfg.name;
 
-                btn.onclick = () => {
-                    PlaySound('snd/tick.mp3');
-                    content.innerHTML = '';
-                    if (typeof cfg.callback === 'function') {
-                        cfg.callback(content);
-                    }
+                const del = document.createElement('span');
+                del.className = 'ccbm-delete';
+                del.textContent = 'このmodを削除';
+
+                del.onclick = () => {
+                    this.removeMod(cfg.id);
                 };
 
-                row.appendChild(btn);
+                row.appendChild(name);
+                row.appendChild(del);
                 list.appendChild(row);
+
+                if (typeof cfg.callback === 'function') {
+                    cfg.callback(content);
+                }
             });
         }
     };
