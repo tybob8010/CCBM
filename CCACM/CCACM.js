@@ -1,17 +1,13 @@
 /*
     CCACM (Cookie Clicker Auto Closing MOD)
-    v.1.1.0
-    
-    CookieClickerを自動で終了させるMOD。指定時間にセーブしてタブを閉じます。
-    (c) 2026 tybob
-    https://github.com/tybob8010/CCBM/CCACM/README.md
+    v.1.2.0
 */
 
 (function() {
     const MOD = {
         init: function() {
             this.name = 'CCACM';
-            // デフォルト設定
+
             this.config = {
                 enabled: 1,
                 targetTime: "",
@@ -19,19 +15,17 @@
                 lastExecutedTime: ""
             };
 
-            // 1. 共通コア(CCBM)にこのMODの設定画面を登録
             if (window.CCBM && typeof window.CCBM.registerConfig === 'function') {
                 window.CCBM.registerConfig(
-                    this.name,               // ID
-                    '自動終了 (CCACM)',      // メニューに表示される名前
-                    () => this.openConfigPrompt() // 呼ばれる関数
+                    this.name,
+                    '自動終了 (CCACM)',
+                    (container) => this.renderConfig(container)
                 );
                 console.log(`[${this.name}] Registered to CCBM.`);
             } else {
-                console.error(`[${this.name}] CCBM Core not found. Please check loading order.`);
+                console.error(`[${this.name}] CCBM Core not found.`);
             }
 
-            // 2. 時刻チェックのメインループ (1秒おき)
             setInterval(() => {
                 if (!this.config.enabled || !this.config.targetTime) return;
 
@@ -40,11 +34,9 @@
                 const currentTimeStr = now.getHours().toString().padStart(2, '0') + ":" + 
                                        now.getMinutes().toString().padStart(2, '0');
 
-                // 本日、すでに実行済みならスキップ
                 if (this.config.lastExecutedDay === todayStr && 
                     this.config.lastExecutedTime === this.config.targetTime) return;
 
-                // 指定時刻に到達
                 if (currentTimeStr === this.config.targetTime) {
                     this.config.lastExecutedDay = todayStr;
                     this.config.lastExecutedTime = this.config.targetTime;
@@ -52,16 +44,13 @@
                     Game.WriteSave();
                     Game.Notify('自動終了', '設定時刻です。終了します。', [23, 11], 3);
 
-                    // セーブ後に終了処理へ
                     setTimeout(() => {
                         Game.WriteSave();
                         
-                        // loader.user.js で定義された特権関数を呼ぶ
                         if (typeof window.closeCCACM === 'function') {
                             window.closeCCACM();
                         }
 
-                        // 失敗時の予備動作
                         setTimeout(() => {
                             window.open('javascript:window.close()', '_self');
                             window.close();
@@ -77,28 +66,50 @@
             console.log(`[${this.name}] Logic Initialized.`);
         },
 
-        // CCBMから呼び出される設定画面
-        openConfigPrompt: function() {
-            // 【統合対応】CCBM側のメインメニューを再描画して表示を更新する
-            if (window.CCBM && typeof window.CCBM.openMainMenu === 'function') {
-                window.CCBM.openMainMenu();
-            }
+        renderConfig: function(container) {
+            const wrap = document.createElement('div');
+            wrap.style.textAlign = 'center';
+
+            const toggle = document.createElement('a');
+            toggle.className = `smallFancyButton option ${this.config.enabled ? 'on' : 'off'}`;
+            toggle.textContent = `自動終了: ${this.config.enabled ? 'ON' : 'OFF'}`;
+
+            toggle.onclick = () => {
+                this.toggleEnabled();
+                toggle.className = `smallFancyButton option ${this.config.enabled ? 'on' : 'off'}`;
+                toggle.textContent = `自動終了: ${this.config.enabled ? 'ON' : 'OFF'}`;
+            };
+
+            const input = document.createElement('input');
+            input.type = 'time';
+            input.value = this.config.targetTime;
+            input.style = "background:#000;color:#fff;border:1px solid #444;padding:4px;font-size:18px;margin-top:5px;";
+
+            const save = document.createElement('a');
+            save.className = 'smallFancyButton option';
+            save.textContent = '保存';
+
+            save.onclick = () => {
+                this.updateTime(input.value);
+            };
+
+            wrap.appendChild(toggle);
+            wrap.appendChild(document.createElement('br'));
+            wrap.appendChild(input);
+            wrap.appendChild(document.createElement('br'));
+            wrap.appendChild(save);
+
+            container.appendChild(wrap);
         },
 
         toggleEnabled: function() {
             this.config.enabled = !this.config.enabled;
             PlaySound('snd/tick.mp3');
-            
-            // 通知
+
             Game.Notify(`自動終了 ${this.config.enabled ? '有効' : '無効'}化`, 
                         `自動終了が${this.config.enabled ? '有効' : '無効'}になりました。`, [1, 7], 0.75);
             
             Game.WriteSave();
-            
-            // 【統合対応】ボタンを押した瞬間にCCBM側のメニュー（ロック状態）を更新
-            if (window.CCBM && typeof window.CCBM.openMainMenu === 'function') {
-                window.CCBM.openMainMenu();
-            }
         },
 
         updateTime: function(val) {
@@ -108,7 +119,6 @@
             Game.WriteSave();
         },
 
-        // ゲームのセーブ/ロードと連動
         save: function() { return JSON.stringify(this.config); },
         load: function(str) {
             if (str) {
@@ -122,6 +132,5 @@
         }
     };
 
-    // MODを登録
     Game.registerMod("CCACM", MOD);
 })();

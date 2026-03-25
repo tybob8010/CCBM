@@ -1,6 +1,6 @@
 /*
     CCBM (Cookie Clicker Basic MOD)
-    v.1.6.7
+    v.1.7.0
 */
 
 (function() {
@@ -48,8 +48,8 @@
                 }
                 .ccbm-base:hover #ccbm_shine { opacity: 0.8; }
 
-                .ccbm-prompt-container { text-align: left; padding: 10px; }
-                .ccbm-button-row { margin: 8px 0; display: block; clear: both; }
+                .ccbm-prompt-container { padding: 10px; }
+                .ccbm-button-row { margin: 6px 0; }
             `;
             document.head.appendChild(style);
         },
@@ -74,9 +74,7 @@
             const icon = document.getElementById('ccbm_icon_element');
             if (icon) {
                 icon.onclick = () => {
-                    if (window.CCBM) {
-                        window.CCBM.openMainMenu();
-                    }
+                    this.openMainMenu();
                     PlaySound('snd/tick.mp3');
                 };
             }
@@ -87,11 +85,13 @@
                 <h3>CCBM Settings</h3>
                 <div class="ccbm-prompt-container">
                     <div id="ccbm_config_list"></div>
+                    <div id="ccbm_config_content" style="margin-top:10px;"></div>
                 </div>
             `, ['閉じる']);
 
-            const container = document.getElementById('ccbm_config_list');
-            if (!container) return;
+            const list = document.getElementById('ccbm_config_list');
+            const content = document.getElementById('ccbm_config_content');
+            if (!list || !content) return;
 
             this.configs.forEach(cfg => {
                 const row = document.createElement('div');
@@ -102,14 +102,15 @@
                 btn.textContent = cfg.name;
 
                 btn.onclick = () => {
-                    if (typeof cfg.callback === 'function') {
-                        cfg.callback();
-                    }
                     PlaySound('snd/tick.mp3');
+                    content.innerHTML = '';
+                    if (typeof cfg.callback === 'function') {
+                        cfg.callback(content);
+                    }
                 };
 
                 row.appendChild(btn);
-                container.appendChild(row);
+                list.appendChild(row);
             });
         }
     };
