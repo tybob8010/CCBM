@@ -1,6 +1,6 @@
 /*
     CCBM (Cookie Clicker Basic MOD)
-    v.1.7.2
+    v.1.7.3
 */
 
 (function() {
@@ -11,14 +11,13 @@
         removedMods: {},
 
         registerConfig: function(id, name, callback) {
-            if (this.removedMods[id]) return; // ← 削除済みは登録させない
             this.configs.push({ id, name, callback });
         },
 
         removeMod: function(id) {
             Game.Notify('MOD削除', id + ' を削除しました（再読み込み不要）', [16, 5], 2);
 
-            this.removedMods[id] = 1; // ← 削除記録
+            this.removedMods[id] = 1;
 
             this.configs = this.configs.filter(c => c.id !== id);
 
@@ -26,9 +25,21 @@
                 delete Game.mods[id];
             }
 
-            Game.WriteSave(); // ← 即保存（重要）
+            Game.WriteSave();
 
             this.openMainMenu();
+        },
+
+        restoreMod: function(id) {
+            if (this.removedMods[id]) {
+                delete this.removedMods[id];
+
+                Game.Notify('MOD復元', id + ' を復元しました（再読み込みで有効）', [16, 5], 2);
+
+                Game.WriteSave();
+
+                this.openMainMenu();
+            }
         },
         
         injectStyle: function() {
@@ -143,19 +154,26 @@
                 name.className = 'ccbm-mod-name';
                 name.textContent = cfg.name;
 
-                const del = document.createElement('span');
-                del.className = 'ccbm-delete';
-                del.textContent = 'このmodを削除';
+                const btn = document.createElement('span');
+                btn.className = 'ccbm-delete';
 
-                del.onclick = () => {
-                    this.removeMod(cfg.id);
-                };
+                if (this.removedMods[cfg.id]) {
+                    btn.textContent = '再読み込み';
+                    btn.onclick = () => {
+                        this.restoreMod(cfg.id);
+                    };
+                } else {
+                    btn.textContent = 'このmodを削除';
+                    btn.onclick = () => {
+                        this.removeMod(cfg.id);
+                    };
+                }
 
                 row.appendChild(name);
-                row.appendChild(del);
+                row.appendChild(btn);
                 list.appendChild(row);
 
-                if (typeof cfg.callback === 'function') {
+                if (!this.removedMods[cfg.id] && typeof cfg.callback === 'function') {
                     cfg.callback(content);
                 }
             });
