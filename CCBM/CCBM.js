@@ -1,6 +1,6 @@
 /*
     CCBM (Cookie Clicker Basic MOD)
-    v.1.7.1
+    v.1.7.2
 */
 
 (function() {
@@ -8,15 +8,26 @@
         isReady: true,
 
         configs: [],
+        removedMods: {},
 
         registerConfig: function(id, name, callback) {
+            if (this.removedMods[id]) return; // ← 削除済みは登録させない
             this.configs.push({ id, name, callback });
         },
 
         removeMod: function(id) {
-            Game.Notify('MOD削除', id + ' を削除しました（リロード推奨）', [16, 5], 2);
+            Game.Notify('MOD削除', id + ' を削除しました（再読み込み不要）', [16, 5], 2);
+
+            this.removedMods[id] = 1; // ← 削除記録
+
             this.configs = this.configs.filter(c => c.id !== id);
-            delete Game.mods[id];
+
+            if (Game.mods[id]) {
+                delete Game.mods[id];
+            }
+
+            Game.WriteSave(); // ← 即保存（重要）
+
             this.openMainMenu();
         },
         
@@ -156,6 +167,22 @@
             Game.registerHook('draw', () => {
                 window.CCBM.drawIcon();
             });
+        },
+
+        save: function() {
+            return JSON.stringify({
+                removedMods: window.CCBM.removedMods
+            });
+        },
+
+        load: function(str) {
+            if (!str) return;
+            try {
+                const data = JSON.parse(str);
+                if (data.removedMods) {
+                    window.CCBM.removedMods = data.removedMods;
+                }
+            } catch(e) {}
         }
     });
 })();
