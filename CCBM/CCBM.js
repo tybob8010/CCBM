@@ -1,6 +1,6 @@
 /*
     CCBM (Cookie Clicker Basic MOD)
-    v.1.8.0
+    v.1.8.1
 */
 
 (function() {
@@ -29,21 +29,16 @@
             this.needsReload = true;
             this.openMainMenu();
         },
-
-        handleClose: function() {
-            if (this.needsReload) {
-                Game.WriteSave();
-                setTimeout(() => {
-                    location.reload();
-                }, 300);
-            }
-        },
         
         injectStyle: function() {
             if (document.getElementById('ccbm_styles')) return;
             const style = document.createElement('style');
             style.id = 'ccbm_styles';
             style.innerHTML = `
+                @keyframes ccacmX_Extreme { from { left: -5px; } to { left: 5px; } }
+                @keyframes ccacmY_Extreme { from { transform: translateY(0px); } to { transform: translateY(-7px); } }
+                @keyframes ccacmRotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
                 .ccbm-base { 
                     position: absolute !important; 
                     bottom: 50px !important; 
@@ -54,6 +49,8 @@
 
                 .ccbm-icon-shaker { 
                     position: absolute; width: 48px; height: 48px; 
+                    animation: ccacmX_Extreme 0.6s infinite alternate ease-in-out, 
+                               ccacmY_Extreme 0.3s infinite alternate ease-in-out; 
                 }
 
                 #ccbm_icon_element { 
@@ -63,25 +60,21 @@
                     filter: drop-shadow(0px 0px 4px #000) !important; 
                 }
 
-                .ccbm-prompt-container { padding: 10px; text-align:left; }
+                #ccbm_shine { 
+                    position: absolute; width: 60px; height: 60px; top: -5px; left: -5px; 
+                    background: url(img/shine.png) no-repeat center; background-size: contain; 
+                    z-index: -1; opacity: 0; 
+                    animation: ccacmRotate 20s infinite linear; 
+                    pointer-events: none; transition: opacity 0.3s;
+                }
+
+                .ccbm-base:hover #ccbm_shine { opacity: 0.8; }
 
                 .ccbm-row {
-                    display: flex;
-                    justify-content: space-between;
-                    margin: 4px 0;
-                }
-
-                .ccbm-delete-btn {
-                    background: #400;
-                    color: #f66;
-                    padding: 2px 6px;
-                    border: 1px solid #a33;
-                    cursor: pointer;
-                }
-
-                .ccbm-delete-btn:hover {
-                    background: #800;
-                    color: #fff;
+                    display:flex;
+                    justify-content:space-between;
+                    align-items:center;
+                    margin:4px 0;
                 }
             `;
             document.head.appendChild(style);
@@ -96,6 +89,7 @@
             
             const html = `
                 <div id="ccbm_base" class="ccbm-base">
+                    <div id="ccbm_shine"></div>
                     <div class="ccbm-icon-shaker">
                         <div id="ccbm_icon_element" title="CCBM Settings"></div>
                     </div>
@@ -117,16 +111,17 @@
 
             Game.Prompt(`
                 <h3>CCBM Settings</h3>
-                <div class="ccbm-prompt-container">
+                <div class="block">
                     <div id="ccbm_config_list"></div>
-                    <div id="ccbm_config_content" style="margin-top:10px;"></div>
+                    <div class="line"></div>
+                    <div id="ccbm_config_content"></div>
                 </div>
             `, [
                 [closeText, 'window.CCBM.handleClose(); Game.ClosePrompt();']
             ]);
 
-            const list = document.getElementById('ccbm_config_list');
-            const content = document.getElementById('ccbm_config_content');
+            const list = l('ccbm_config_list');
+            const content = l('ccbm_config_content');
             if (!list || !content) return;
 
             this.configs.forEach(cfg => {
@@ -136,9 +131,10 @@
                 const name = document.createElement('span');
                 name.textContent = cfg.name;
 
-                const del = document.createElement('span');
-                del.className = 'ccbm-delete-btn';
-                del.textContent = 'セーブデータを削除';
+                const del = document.createElement('a');
+                del.className = 'smallFancyButton option';
+                del.style.color = '#f66';
+                del.textContent = 'セーブ削除';
 
                 del.onclick = () => {
                     this.removeModData(cfg.id);
@@ -153,13 +149,19 @@
                 }
             });
 
-            // 外クリック検知（CookieClicker再現）
             const oldClose = Game.ClosePrompt;
             Game.ClosePrompt = function() {
                 if (window.CCBM) window.CCBM.handleClose();
                 oldClose();
                 Game.ClosePrompt = oldClose;
             };
+        },
+
+        handleClose: function() {
+            if (this.needsReload) {
+                Game.WriteSave();
+                setTimeout(() => location.reload(), 300);
+            }
         }
     };
 
