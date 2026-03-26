@@ -1,14 +1,14 @@
 /*
     CCBM (Cookie Clicker Basic MOD)
-    v.1.7.3
+    v.1.8.1
 */
 
 (function() {
     window.CCBM = window.CCBM || {
         isReady: true,
-
         configs: [],
         removedMods: {},
+        modulePaths: {},
 
         registerConfig: function(id, name, callback) {
             this.configs.push({ id, name, callback });
@@ -16,39 +16,50 @@
 
         removeMod: function(id) {
         Game.Notify(id + '削除', id + 'を削除しました', [16, 5], 1.5);
-
         this.removedMods[id] = 1;
-
-        // セーブデータ削除
         if (Game.modSaveData && Game.modSaveData[id]) {
             delete Game.modSaveData[id];
         }
-
-        // MOD本体削除
         if (Game.mods[id]) {
             delete Game.mods[id];
         }
-
         Game.WriteSave();
-
         this.openMainMenu();
     },
 
         restoreMod: function(id) {
         if (!this.removedMods[id]) return;
-
         delete this.removedMods[id];
-
         Game.Notify(id + '読み込み', id + ' を再読み込みします', [16, 5], 1.5);
-
         Game.WriteSave();
-
-        if (Game.LoadMod) {
+        if (this.modulePaths && this.modulePaths[id]) {
+            Game.LoadMod(this.modulePaths[id]);
+        } else {
             Game.LoadMod(`CCBM/${id}/${id}.js`);
         }
-
         this.openMainMenu();
     },
+
+        loadModules: function() {
+            fetch('modules.json')
+                .then(res => res.json())
+                .then(data => {
+                    if (!data.active_modules) return;
+
+                    data.active_modules.forEach(path => {
+                        const parts = path.split('/');
+                        const file = parts[parts.length - 1];
+                        const id = file.replace('.js', '');
+
+                        this.modulePaths[id] = path;
+
+                        if (!this.removedMods[id]) {
+                            Game.LoadMod(path);
+                        }
+                    });
+                })
+                .catch(() => {});
+        },
 
     //====================================================================================================
     //歯車
@@ -183,6 +194,7 @@
 
     Game.registerMod("CCBM", {
         init: function() {
+            window.CCBM.loadModules();
             Game.registerHook('draw', () => {
                 window.CCBM.drawIcon();
             });
