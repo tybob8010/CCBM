@@ -15,30 +15,42 @@
         },
 
         removeMod: function(id) {
-            Game.Notify('MOD削除', id + ' を削除しました（再読み込み不要）', [16, 5], 2);
+        Game.Notify('MOD削除', id + ' のデータを削除しました', [16, 5], 2);
 
-            this.removedMods[id] = 1;
+        this.removedMods[id] = 1;
 
-            if (Game.mods[id]) {
-                delete Game.mods[id];
-            }
+        // セーブデータ削除
+        if (Game.modSaveData && Game.modSaveData[id]) {
+            delete Game.modSaveData[id];
+        }
 
-            Game.WriteSave();
+        // MOD本体削除
+        if (Game.mods[id]) {
+            delete Game.mods[id];
+        }
 
-            this.openMainMenu();
-        },
+        Game.WriteSave();
+
+        this.openMainMenu();
+    },
 
         restoreMod: function(id) {
-            if (this.removedMods[id]) {
-                delete this.removedMods[id];
+        if (!this.removedMods[id]) return;
 
-                Game.Notify('MOD復元', id + ' を復元しました（再読み込みで有効）', [16, 5], 2);
+        delete this.removedMods[id];
 
-                Game.WriteSave();
+        Game.Notify('MOD復元', id + ' を再読み込みします', [16, 5], 2);
 
-                this.openMainMenu();
-            }
-        },
+        Game.WriteSave();
+
+        // 🔥 再ロード（ここが重要）
+        if (Game.LoadMod) {
+            // URLは各自の構成に合わせる
+            Game.LoadMod(`CCBM/${id}/${id}.js`);
+        }
+
+        this.openMainMenu();
+    },
         
         injectStyle: function() {
             if (document.getElementById('ccbm_styles')) return;
