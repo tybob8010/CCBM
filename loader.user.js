@@ -8,6 +8,7 @@
 // ==/UserScript==
 
 (function() {
+
     //====================================================================================================
     //初期宣言
     //====================================================================================================
@@ -26,18 +27,35 @@
     
     const loadModules = async () => {
         try {
-            // 1. 配信中のモジュールリストを取得
             const res = await fetch(`${BASE_URL}modules.json?t=${Date.now()}`);
             const data = await res.json();
-            
-            // 2. Game.LoadMod を使って各.jsを読み込む
+
+            let removed = {};
+            try {
+                const save = JSON.parse(localStorage.getItem('CookieClickerGame'));
+                if (save && save.mods && save.mods.CCBM) {
+                    const parsed = JSON.parse(save.mods.CCBM);
+                    if (parsed.removedMods) removed = parsed.removedMods;
+                }
+            } catch(e) {}
+
             data.active_modules.forEach(path => {
+                const parts = path.split('/');
+                const file = parts[parts.length - 1];
+                const id = file.replace('.js', '');
+
+                if (removed[id]) {
+                    console.log(`[CCBM] Skip removed mod: ${id}`);
+                    return;
+                }
+
                 const url = `${BASE_URL}${path}`;
-                Game.LoadMod(url); 
+                Game.LoadMod(url);
                 console.log(`[CCBM] Official Load: ${url}`);
             });
-            
+
             Game.Notify('CCBM起動', 'GitHubから最新のモジュールを読み込みました', [16, 5], 2);
+
         } catch (e) {
             console.error('[CCBM] Failed to load modules:', e);
         }
@@ -48,7 +66,6 @@
     //実行
     //====================================================================================================
     
-    // ゲームの起動を確認してから実行
     const boot = setInterval(() => {
         if (typeof Game !== 'undefined' && Game.ready) {
             clearInterval(boot);

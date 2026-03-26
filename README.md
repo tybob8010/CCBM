@@ -1,6 +1,6 @@
 # CookieClickerBasicMOD (CCBM)
 
-### Latest Version : `v.1.0.0` (Loader)
+### Latest Version : `v.1.0.0` (CCBM)
 ※各MODのバージョン情報は[収録MOD一覧](#収録mod一覧)をご覧ください。
 
 ---
