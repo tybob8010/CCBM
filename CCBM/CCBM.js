@@ -194,7 +194,6 @@
 
     Game.registerMod("CCBM", {
         init: function() {
-            window.CCBM.loadModules();
             Game.registerHook('draw', () => {
                 window.CCBM.drawIcon();
             });
