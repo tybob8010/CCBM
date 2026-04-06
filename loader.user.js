@@ -1,10 +1,10 @@
 // ==UserScript==
 // @name         CCBM_Loader
+// @version      v1.0.1
 // @namespace    https://github.com/tybob8010/CCBM/
 // @author       tybob8010(ぼぶ)
 // @match        https://orteil.dashnet.org/cookieclicker/
-// @grant window.close
-// @run-at document-start
+// @grant        window.close
 // ==/UserScript==
 
 (function() {
