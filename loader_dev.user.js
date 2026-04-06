@@ -58,6 +58,20 @@
                     const code = await scriptRes.text();
 
                     eval(code);
+                    if (typeof Game !== 'undefined' && Game.mods) {
+                        const parts = path.split('/');
+                        const file = parts[parts.length - 1];
+                        const id = file.replace('.js', '');
+
+                        if (Game.mods[id] && typeof Game.mods[id].init === 'function') {
+                            try {
+                                Game.mods[id].init();
+                                console.log(`[CCBM-Dev] Forced init: ${id}`);
+                            } catch(e) {
+                                console.error(`[CCBM-Dev] Init failed: ${id}`, e);
+                            }
+                        }
+                    }
 
                     console.log(`[CCBM-Dev] Official Load: ${url}`);
                 } catch (err) {
