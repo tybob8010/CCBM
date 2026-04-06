@@ -1,6 +1,6 @@
 /*
     CCACM (Cookie Clicker Auto Closing MOD)
-    v.1.1.0
+    v.1.1.1
 */
 
 (function() {
@@ -42,6 +42,7 @@
                         
                         if (typeof window.closeCCACM === 'function') {
                             window.closeCCACM();
+                            return;
                         }
                         setTimeout(() => {
                             window.open('javascript:window.close()', '_self');
