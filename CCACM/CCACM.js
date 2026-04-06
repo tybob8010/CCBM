@@ -49,6 +49,7 @@
                         
                         if (typeof window.closeCCACM === 'function') {
                             window.closeCCACM();
+                            return;
                         }
 
                         setTimeout(() => {
