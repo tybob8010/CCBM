@@ -26,7 +26,8 @@
 
     const loadModules = async () => {
         try {
-            const res = await fetch(`${BASE_URL}modules.json?t=${Date.now()}`);
+            const cacheBust = `?t=${Date.now()}`;
+            const res = await fetch(`${BASE_URL}modules.json${cacheBust}`);
             const data = await res.json();
 
             let removed = {};
@@ -38,7 +39,7 @@
                 }
             } catch(e) {}
 
-            // 順番保証しつつ Game.LoadMod 使用
+            // 順番保証しつつ eval 読み込み
             for (const path of data.active_modules) {
                 const parts = path.split('/');
                 const file = parts[parts.length - 1];
@@ -49,13 +50,24 @@
                     continue;
                 }
 
-                const url = `${BASE_URL}${path}?t=${Date.now()}`;
+                const url = `${BASE_URL}${path}${cacheBust}`;
 
-                Game.LoadMod(url);
-                console.log(`[CCBM-Dev] Official Load: ${url}`);
+                try {
+                    const scriptRes = await fetch(url);
+                    if (!scriptRes.ok) throw new Error(`HTTP ${scriptRes.status}`);
+                    const code = await scriptRes.text();
+
+                    eval(code);
+
+                    console.log(`[CCBM-Dev] Official Load: ${url}`);
+                } catch (err) {
+                    console.error(`[CCBM-Dev] Load Failed: ${url}`, err);
+                }
             }
 
-            Game.Notify('CCBM Dev起動', '開発ブランチから読み込みました', [16, 5], 2);
+            if (typeof Game.Notify !== 'undefined') {
+                Game.Notify('CCBM Dev起動', '開発ブランチから読み込みました', [16, 5], 2);
+            }
 
         } catch (e) {
             console.error('[CCBM-Dev] Failed to load modules:', e);
