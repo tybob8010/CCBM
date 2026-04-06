@@ -29,33 +29,49 @@
                 const todayStr = now.toLocaleDateString();
                 const currentTimeStr = now.getHours().toString().padStart(2, '0') + ":" + 
                                        now.getMinutes().toString().padStart(2, '0');
+                
                 if (this.config.lastExecutedDay === todayStr && 
                     this.config.lastExecutedTime === this.config.targetTime) return;
+
                 if (currentTimeStr === this.config.targetTime) {
                     this.config.lastExecutedDay = todayStr;
                     this.config.lastExecutedTime = this.config.targetTime;
                     
-                    Game.WriteSave();
-                    Game.Notify('自動終了', '設定時刻です。終了します。', [23, 11], 3);
-                    setTimeout(() => {
-                        Game.WriteSave();
-                        
-                        if (typeof window.closeCCACM === 'function') {
-                            window.closeCCACM();
-                            return;
-                        }
-                        setTimeout(() => {
-                            window.open('javascript:window.close()', '_self');
-                            window.close();
-                        }, 500);
-                        setTimeout(() => {
-                            if (!window.closed) window.location.replace("about:blank");
-                        }, 1500);
-                    }, 2000);
+                    // 実行
+                    this.executeShutdown();
                 }
             }, 1000);
             console.log(`[${this.name}] Logic Initialized.`);
         },
+
+        executeShutdown: function() {
+            Game.WriteSave();
+            Game.Notify('自動終了', '設定時刻です。終了します。', [23, 11], 3);
+            
+            setTimeout(() => {
+                Game.WriteSave();
+                
+                // 1. Loader側で定義されたクローズ関数を試行
+                if (typeof window.closeCCACM === 'function') {
+                    window.closeCCACM();
+                    return;
+                }
+
+                // 2. 直接の window.close 試行
+                window.close();
+
+                // 3. 閉じられなかった場合の最終手段 (5秒待ってまだ開いていれば)
+                setTimeout(() => {
+                    if (window && !window.closed) {
+                        console.log("[CCACM] standard close failed, trying self-redirect prevention.");
+                        // about:blankへのリダイレクトを避けたい場合は、ここをコメントアウトするか
+                        // 通知を出すだけにとどめるのが安全です。
+                        // window.location.replace("about:blank"); 
+                    }
+                }, 5000);
+            }, 2000);
+        },
+
         renderConfig: function(container) {
             const wrap = document.createElement('div');
             wrap.style.textAlign = 'center';
