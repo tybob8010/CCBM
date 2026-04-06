@@ -1,6 +1,6 @@
 /*
     CCBM (Cookie Clicker Basic MOD)
-    v.1.0.0
+    v.1.0.1pre
 */
 
 (function() {
@@ -32,34 +32,13 @@
         delete this.removedMods[id];
         Game.Notify(id + '読み込み', id + ' を再読み込みします', [16, 5], 1.5);
         Game.WriteSave();
+
         if (this.modulePaths && this.modulePaths[id]) {
             Game.LoadMod(this.modulePaths[id]);
-        } else {
-            Game.LoadMod(`CCBM/${id}/${id}.js`);
         }
+
         this.openMainMenu();
     },
-
-        loadModules: function() {
-            fetch('modules.json')
-                .then(res => res.json())
-                .then(data => {
-                    if (!data.active_modules) return;
-
-                    data.active_modules.forEach(path => {
-                        const parts = path.split('/');
-                        const file = parts[parts.length - 1];
-                        const id = file.replace('.js', '');
-
-                        this.modulePaths[id] = path;
-
-                        if (!this.removedMods[id]) {
-                            Game.LoadMod(path);
-                        }
-                    });
-                })
-                .catch(() => {});
-        },
 
     //====================================================================================================
     //歯車

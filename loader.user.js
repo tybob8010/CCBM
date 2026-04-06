@@ -30,6 +30,7 @@
         try {
             const res = await fetch(`${BASE_URL}modules.json?t=${Date.now()}`);
             const data = await res.json();
+
             let removed = {};
             try {
                 const save = JSON.parse(localStorage.getItem('CookieClickerGame'));
@@ -38,19 +39,31 @@
                     if (parsed.removedMods) removed = parsed.removedMods;
                 }
             } catch(e) {}
+
+            if (!window.CCBM) window.CCBM = {};
+            if (!window.CCBM.modulePaths) window.CCBM.modulePaths = {};
+
             data.active_modules.forEach(path => {
                 const parts = path.split('/');
                 const file = parts[parts.length - 1];
                 const id = file.replace('.js', '');
+
+                const url = `${BASE_URL}${path}`;
+
+                // modulePathsを必ず登録（restore用）
+                window.CCBM.modulePaths[id] = url;
+
                 if (removed[id]) {
                     console.log(`[CCBM] Skip removed mod: ${id}`);
                     return;
                 }
-                const url = `${BASE_URL}${path}`;
+
                 Game.LoadMod(url);
                 console.log(`[CCBM] Official Load: ${url}`);
             });
+
             Game.Notify('CCBM起動', 'CCBMが起動しました。', [16, 5], 2);
+
         } catch (e) {
             console.error('[CCBM] Failed to load :', e);
         }
@@ -67,4 +80,5 @@
             loadModules();
         }
     }, 1000);
+
 })();
