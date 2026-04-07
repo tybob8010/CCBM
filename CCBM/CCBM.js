@@ -34,7 +34,7 @@
                     </div>
                 </div>
             `, [
-                ['削除する', `Game.mods["CCBM"].confirmRemove("${id}")`],
+                ['削除する', `window.CCBM.confirmRemove("${id}")`],
                 'キャンセル'
             ]);
         },
@@ -42,7 +42,7 @@
         confirmRemove: function(id) {
             this.removedMods[id] = 1;
 
-            // Mod無効化（安全）
+            // Mod無効化
             if (Game.mods[id]) {
                 try {
                     Game.mods[id].disabled = true;
@@ -50,19 +50,19 @@
                 delete Game.mods[id];
             }
 
-            // セーブデータ削除
+            // セーブ削除
             if (Game.modSaveData && Game.modSaveData[id]) {
                 delete Game.modSaveData[id];
             }
 
-            // UIから除外
+            // UI除外
             this.configs = this.configs.filter(c => c.id !== id);
 
             Game.Notify(id + '削除', 'MODとセーブデータを削除しました', [16, 5], 2);
             Game.WriteSave();
 
             Game.ClosePrompt();
-            setTimeout(() => this.openMainMenu(), 50);
+            setTimeout(() => window.CCBM.openMainMenu(), 50);
         },
 
         restoreMod: function(id) {
@@ -73,14 +73,12 @@
             Game.Notify(id + '復元', 'MODを再読み込みします', [16, 5], 2);
 
             const BASE_URL = 'https://tybob8010.github.io/CCBM/';
-
-            // 強制再読み込み（キャッシュ回避）
             Game.LoadMod(`${BASE_URL}${id}/${id}.js?t=${Date.now()}`);
 
             Game.WriteSave();
 
             Game.ClosePrompt();
-            setTimeout(() => this.openMainMenu(), 100);
+            setTimeout(() => window.CCBM.openMainMenu(), 100);
         },
 
 
@@ -149,20 +147,27 @@
             if (document.getElementById('ccbm_base')) return;
             const target = l('sectionLeft');
             if (!target) return;
+
             this.injectStyle();
+
             const base = document.createElement('div');
             base.id = 'ccbm_base';
             base.className = 'ccbm-base';
+
             const shine = document.createElement('div');
             shine.id = 'ccbm_shine';
+
             const shaker = document.createElement('div');
             shaker.className = 'ccbm-shaker';
+
             const icon = document.createElement('div');
             icon.id = 'ccbm_icon';
+
             icon.onclick = () => {
-                this.openMainMenu();
+                window.CCBM.openMainMenu();
                 PlaySound('snd/tick.mp3');
             };
+
             shaker.appendChild(icon);
             base.appendChild(shine);
             base.appendChild(shaker);
@@ -199,10 +204,10 @@
 
                 if (this.removedMods[cfg.id]) {
                     btn.textContent = '再読み込み';
-                    btn.onclick = () => this.restoreMod(cfg.id);
+                    btn.onclick = () => window.CCBM.restoreMod(cfg.id);
                 } else {
                     btn.textContent = '削除';
-                    btn.onclick = () => this.removeMod(cfg.id);
+                    btn.onclick = () => window.CCBM.removeMod(cfg.id);
                 }
 
                 row.appendChild(name);
