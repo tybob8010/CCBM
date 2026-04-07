@@ -24,9 +24,9 @@
 
         removeMod: function(id) {
             Game.Prompt(`
-                <h3>MOD削除の確認</h3>
+                <h3 style="color:#ff3333;">⚠ MOD削除の確認</h3>
                 <div class="block">
-                    <div class="description">
+                    <div class="description" style="color:#ff4444;font-weight:bold;">
                         「${id}」を削除します。<br><br>
                         ・MOD本体は無効化されます<br>
                         ・セーブデータ内のMOD設定も削除されます<br><br>
@@ -41,25 +41,46 @@
 
         confirmRemove: function(id) {
             this.removedMods[id] = 1;
+
+            // Mod無効化（安全）
             if (Game.mods[id]) {
+                try {
+                    Game.mods[id].disabled = true;
+                } catch(e) {}
                 delete Game.mods[id];
             }
+
+            // セーブデータ削除
             if (Game.modSaveData && Game.modSaveData[id]) {
                 delete Game.modSaveData[id];
             }
+
+            // UIから除外
             this.configs = this.configs.filter(c => c.id !== id);
+
             Game.Notify(id + '削除', 'MODとセーブデータを削除しました', [16, 5], 2);
             Game.WriteSave();
+
             Game.ClosePrompt();
+            setTimeout(() => this.openMainMenu(), 50);
         },
 
         restoreMod: function(id) {
             if (!this.removedMods[id]) return;
+
             delete this.removedMods[id];
+
             Game.Notify(id + '復元', 'MODを再読み込みします', [16, 5], 2);
+
             const BASE_URL = 'https://tybob8010.github.io/CCBM/';
-            Game.LoadMod(`${BASE_URL}${id}/${id}.js`);
+
+            // 強制再読み込み（キャッシュ回避）
+            Game.LoadMod(`${BASE_URL}${id}/${id}.js?t=${Date.now()}`);
+
             Game.WriteSave();
+
+            Game.ClosePrompt();
+            setTimeout(() => this.openMainMenu(), 100);
         },
 
 
@@ -113,6 +134,7 @@
                 .ccbm-delete {
                     color:#f66;
                     cursor:pointer;
+                    margin-left:10px;
                 }
             `;
             document.head.appendChild(style);
@@ -158,16 +180,23 @@
                 <div id="ccbm_config_list"></div>
                 <div id="ccbm_config_content"></div>
             `, ['閉じる']);
+
             const list = document.getElementById('ccbm_config_list');
             const content = document.getElementById('ccbm_config_content');
+
             if (!list || !content) return;
+
             this.configs.forEach(cfg => {
+
                 const row = document.createElement('div');
                 row.className = 'ccbm-row';
+
                 const name = document.createElement('span');
                 name.textContent = cfg.name;
+
                 const btn = document.createElement('span');
                 btn.className = 'ccbm-delete';
+
                 if (this.removedMods[cfg.id]) {
                     btn.textContent = '再読み込み';
                     btn.onclick = () => this.restoreMod(cfg.id);
@@ -175,12 +204,15 @@
                     btn.textContent = '削除';
                     btn.onclick = () => this.removeMod(cfg.id);
                 }
+
                 row.appendChild(name);
                 row.appendChild(btn);
                 list.appendChild(row);
+
                 if (!this.removedMods[cfg.id] && typeof cfg.callback === 'function') {
                     cfg.callback(content);
                 }
+
             });
         }
     };
