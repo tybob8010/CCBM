@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         CCBM_Loader
-// @version      v1.0.2
+// @version      v1.0.3
 // @namespace    https://github.com/tybob8010/CCBM/
 // @match        https://orteil.dashnet.org/cookieclicker/
 // @grant        window.close
@@ -8,14 +8,18 @@
 // ==/UserScript==
 
 (function() {
+    'use strict';
 
     const BASE_URL = 'https://tybob8010.github.io/CCBM/';
 
-    // ★重要：unsafeWindowに注入
-    unsafeWindow.closeCCACM = function() {
-        console.log("[CCACM] Closing via userscript privilege");
+    // ★重要：userscript権限で関数を作る
+    function closeByTM() {
+        console.log("[CCACM] Closing via TM privilege");
         window.close();
-    };
+    }
+
+    // ★それをページに渡す
+    unsafeWindow.closeCCACM = closeByTM;
 
     const loadModules = async () => {
         try {
@@ -23,7 +27,9 @@
             const data = await res.json();
 
             for (const path of data.active_modules) {
-                Game.LoadMod(`${BASE_URL}${path}`);
+                const url = `${BASE_URL}${path}`;
+                Game.LoadMod(url);
+                console.log("[CCBM] Load:", url);
             }
 
             Game.Notify('CCBM起動', 'CCBMが起動しました。', [16, 5], 2);
