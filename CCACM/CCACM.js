@@ -47,28 +47,23 @@
         executeShutdown: function() {
             Game.WriteSave();
             Game.Notify('自動終了', '設定時刻です。終了します。', [23, 11], 3);
-            
+
             setTimeout(() => {
                 Game.WriteSave();
-                
-                // 1. Loader側で定義されたクローズ関数を試行
-                if (typeof window.closeCCACM === 'function') {
-                    window.closeCCACM();
-                    return;
+
+                // ★確実に存在する前提で呼ぶ
+                try {
+                    if (window.closeCCACM) {
+                        window.closeCCACM();
+                        return;
+                    }
+                } catch (e) {
+                    console.error("[CCACM] closeCCACM call failed", e);
                 }
 
-                // 2. 直接の window.close 試行
+                // フォールバック（ほぼ無意味だが残す）
                 window.close();
 
-                // 3. 閉じられなかった場合の最終手段 (5秒待ってまだ開いていれば)
-                setTimeout(() => {
-                    if (window && !window.closed) {
-                        console.log("[CCACM] standard close failed, trying self-redirect prevention.");
-                        // about:blankへのリダイレクトを避けたい場合は、ここをコメントアウトするか
-                        // 通知を出すだけにとどめるのが安全です。
-                        // window.location.replace("about:blank"); 
-                    }
-                }, 5000);
             }, 2000);
         },
 
