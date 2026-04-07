@@ -228,6 +228,10 @@
     //=========================
     Game.registerMod("CCBM", {
         init: function() {
+            Game.mods["CCBM"].confirmRemove = window.CCBM.confirmRemove.bind(window.CCBM);
+            Game.mods["CCBM"].removeMod = window.CCBM.removeMod.bind(window.CCBM);
+            Game.mods["CCBM"].restoreMod = window.CCBM.restoreMod.bind(window.CCBM);
+            
             Game.registerHook('draw', () => {
                 window.CCBM.drawIcon();
             });
