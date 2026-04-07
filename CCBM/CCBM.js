@@ -1,6 +1,6 @@
 /*
     CCBM (Cookie Clicker Basic MOD)
-    FIXED
+    STABLE FIX
 */
 
 (function() {
@@ -14,7 +14,7 @@
         },
 
         // =========================
-        // スタイル（元のアニメ復元）
+        // スタイル
         // =========================
         injectStyle: function() {
             if (document.getElementById('ccbm_styles')) return;
@@ -60,6 +60,17 @@
                 .ccbm-base:hover #ccbm_shine {
                     opacity:0.8;
                 }
+
+                .ccbm-row {
+                    display:flex;
+                    justify-content:space-between;
+                    margin:4px 0;
+                }
+
+                .ccbm-delete {
+                    color:#f66;
+                    cursor:pointer;
+                }
             `;
             document.head.appendChild(style);
         },
@@ -99,8 +110,35 @@
             target.appendChild(base);
         },
 
+        // =========================
+        // メニュー（これが本体）
+        // =========================
         openMainMenu: function() {
-            Game.Prompt(`<h3>CCBM</h3>`, ['閉じる']);
+            Game.Prompt(`
+                <h3>CCBM Settings</h3>
+                <div id="ccbm_config_list"></div>
+                <div id="ccbm_config_content"></div>
+            `, ['閉じる']);
+
+            const list = document.getElementById('ccbm_config_list');
+            const content = document.getElementById('ccbm_config_content');
+
+            if (!list || !content) return;
+
+            this.configs.forEach(cfg => {
+                const row = document.createElement('div');
+                row.className = 'ccbm-row';
+
+                const name = document.createElement('span');
+                name.textContent = cfg.name;
+
+                row.appendChild(name);
+                list.appendChild(row);
+
+                if (typeof cfg.callback === 'function') {
+                    cfg.callback(content);
+                }
+            });
         }
     };
 
@@ -109,12 +147,6 @@
     // =========================
     Game.registerMod("CCBM", {
         init: function() {
-
-            // ★重要（これ消すと崩壊する）
-            if (window.CCBM.loadModules) {
-                window.CCBM.loadModules();
-            }
-
             Game.registerHook('draw', () => {
                 window.CCBM.drawIcon();
             });
