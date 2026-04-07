@@ -33,6 +33,7 @@
             const data = await res.json();
             for (const path of data.active_modules) {
                 const url = `${BASE_URL}${path}`;
+                if (unsafeWindow.CCBM?.removedMods?.[id]) continue;
                 Game.LoadMod(url);
                 console.log("[CCBM] Load:", url);
             }   

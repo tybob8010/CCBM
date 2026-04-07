@@ -40,30 +40,31 @@
         },
 
         confirmRemove: function(id) {
-            this.removedMods[id] = 1;
 
-            // Mod無効化
-            if (Game.mods[id]) {
-                try {
+                this.removedMods[id] = 1;
+
+                // MOD停止フラグ
+                if (Game.mods[id]) {
                     Game.mods[id].disabled = true;
-                } catch(e) {}
-                delete Game.mods[id];
-            }
+                }
 
-            // セーブ削除
-            if (Game.modSaveData && Game.modSaveData[id]) {
-                delete Game.modSaveData[id];
-            }
+                // セーブデータ削除
+                if (Game.modSaveData && Game.modSaveData[id]) {
+                    delete Game.modSaveData[id];
+                }
 
-            // UI除外
-            this.configs = this.configs.filter(c => c.id !== id);
+                // ★ここが重要：mods自体も削除
+                if (Game.mods[id]) {
+                    delete Game.mods[id];
+                }
 
-            Game.Notify(id + '削除', 'MODとセーブデータを削除しました', [16, 5], 2);
-            Game.WriteSave();
+                Game.Notify(id + '削除', 'MODとセーブデータを削除しました', [16, 5], 2);
 
-            Game.ClosePrompt();
-            setTimeout(() => window.CCBM.openMainMenu(), 50);
-        },
+                Game.WriteSave();
+
+                Game.ClosePrompt();
+                setTimeout(() => this.openMainMenu(), 50);
+            },
 
         restoreMod: function(id) {
             if (!this.removedMods[id]) return;
