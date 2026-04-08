@@ -28,20 +28,33 @@
     //=========================
 
     const loadModules = async () => {
-        try {
-            const res = await fetch(`${BASE_URL}modules.json?t=${Date.now()}`);
-            const data = await res.json();
-            for (const path of data.active_modules) {
-                const url = `${BASE_URL}${path}`;
-                if (unsafeWindow.CCBM?.removedMods?.[id]) continue;
-                Game.LoadMod(url);
-                console.log("[CCBM] Load:", url);
-            }   
-            Game.Notify('CCBM起動', 'CCBMが起動しました。', [16, 5], 2);
-        } catch (e) {
-            console.error('[CCBM] Failed to load :', e);
+    try {
+        const res = await fetch(`${BASE_URL}modules.json?t=${Date.now()}`);
+        const data = await res.json();
+
+        for (const path of data.active_modules) {
+
+            // ★ここ追加（最重要）
+            const id = path.split('/')[0];
+
+            const url = `${BASE_URL}${path}`;
+
+            // ★削除済みなら読み込まない
+            if (unsafeWindow.CCBM?.removedMods?.[id]) {
+                console.log("[CCBM] Skip:", id);
+                continue;
+            }
+
+            Game.LoadMod(url);
+            console.log("[CCBM] Load:", url);
         }
-    };
+
+        Game.Notify('CCBM起動', 'CCBMが起動しました。', [16, 5], 2);
+
+    } catch (e) {
+        console.error('[CCBM] Failed to load :', e);
+    }
+};
 
     const boot = setInterval(() => {
         if (typeof Game !== 'undefined' && Game.ready) {

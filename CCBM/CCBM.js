@@ -15,9 +15,56 @@
         removedMods: {},
 
         registerConfig: function(id, name, callback) {
-            // ★重複防止（最重要）
             if (this.configs.some(c => c.id === id)) return;
             this.configs.push({ id, name, callback });
+        },
+
+
+        //=========================
+        //リロード警告
+        //=========================
+
+        confirmReload: function(callback) {
+
+            // 非表示設定チェック
+            if (localStorage.getItem("ccbm_noReloadWarn") === "1") {
+                callback();
+                return;
+            }
+
+            Game.Prompt(`
+                <h3>確認</h3>
+                <div class="block">
+                    <div class="description">
+                        この操作はゲームの再読み込みが必要です。<br><br>
+                        よろしいですか？
+                    </div>
+                    <div style="margin-top:10px;">
+                        <label style="cursor:pointer;">
+                            <input type="checkbox" id="ccbm_no_warn">
+                            次回から表示しない
+                        </label>
+                    </div>
+                </div>
+            `, [
+                ['実行する', `
+                    if (l('ccbm_no_warn') && l('ccbm_no_warn').checked) {
+                        localStorage.setItem("ccbm_noReloadWarn","1");
+                    }
+                    window.CCBM._doReloadAction()
+                `],
+                'キャンセル'
+            ]);
+
+            // コールバック退避
+            this._pendingAction = callback;
+        },
+
+        _doReloadAction: function() {
+            if (this._pendingAction) {
+                this._pendingAction();
+                this._pendingAction = null;
+            }
         },
 
 
@@ -27,7 +74,7 @@
 
         removeMod: function(id) {
             Game.Prompt(`
-                <h3 style="color:#ff2222;">⚠ MOD削除の確認</h3>
+                <h3>MOD削除の確認</h3>
                 <div class="block">
                     <div class="description" style="color:#ff5555;font-weight:bold;">
                         「${id}」を削除します。<br><br>
@@ -44,45 +91,40 @@
 
         confirmRemove: function(id) {
 
-            this.removedMods[id] = 1;
+            this.confirmReload(() => {
 
-            if (Game.mods[id]) {
-                try { Game.mods[id].disabled = true; } catch(e) {}
-            }
+                this.removedMods[id] = 1;
 
-            if (Game.modSaveData && Game.modSaveData[id]) {
-                delete Game.modSaveData[id];
-            }
+                if (Game.mods[id]) {
+                    try { Game.mods[id].disabled = true; } catch(e) {}
+                }
 
-            if (Game.mods[id]) {
-                delete Game.mods[id];
-            }
+                if (Game.modSaveData && Game.modSaveData[id]) {
+                    delete Game.modSaveData[id];
+                }
 
-            this.configs = this.configs.filter(c => c.id !== id);
+                if (Game.mods[id]) {
+                    delete Game.mods[id];
+                }
 
-            Game.WriteSave();
+                this.configs = this.configs.filter(c => c.id !== id);
 
-            Game.Notify(id + '削除', 'ページを再読み込みします', [16, 5], 2);
-
-            // ★ここが重要
-            setTimeout(() => {
+                Game.WriteSave();
                 location.reload();
-            }, 500);
+            });
         },
+
         restoreMod: function(id) {
 
             if (!this.removedMods[id]) return;
 
-            delete this.removedMods[id];
+            this.confirmReload(() => {
 
-            Game.WriteSave();
+                delete this.removedMods[id];
 
-            Game.Notify(id + '復元', 'ページを再読み込みします', [16, 5], 2);
-
-            // ★ここが重要
-            setTimeout(() => {
+                Game.WriteSave();
                 location.reload();
-            }, 500);
+            });
         },
 
 
@@ -205,7 +247,6 @@
 
             if (!list || !content) return;
 
-            // ★毎回クリア（増殖防止）
             list.innerHTML = '';
             content.innerHTML = '';
 
