@@ -1,6 +1,6 @@
 /*
     CCBM (Cookie Clicker Basic MOD)
-    v.1.0.2pre
+    v.1.0.2
 */
 
 (function() {
@@ -13,7 +13,9 @@
     window.CCBM = window.CCBM || {
         configs: [],
         removedMods: {},
+
         registerConfig: function(id, name, callback) {
+            // ★重複防止（最重要）
             if (this.configs.some(c => c.id === id)) return;
             this.configs.push({ id, name, callback });
         },
@@ -25,13 +27,13 @@
 
         removeMod: function(id) {
             Game.Prompt(`
-                <h3 style="color:#ff3333;">⚠ MOD削除の確認</h3>
+                <h3 style="color:#ff2222;">⚠ MOD削除の確認</h3>
                 <div class="block">
-                    <div class="description" style="color:#ff4444;font-weight:bold;">
+                    <div class="description" style="color:#ff5555;font-weight:bold;">
                         「${id}」を削除します。<br><br>
                         ・MOD本体は無効化されます<br>
                         ・セーブデータ内のMOD設定も削除されます<br><br>
-                        この操作は再読み込みで戻せます
+                        ※再読み込みで復元可能
                     </div>
                 </div>
             `, [
@@ -42,46 +44,61 @@
 
         confirmRemove: function(id) {
 
-                this.removedMods[id] = 1;
+            // フラグ
+            this.removedMods[id] = 1;
 
-                // MOD停止フラグ
-                if (Game.mods[id]) {
+            // MOD停止
+            if (Game.mods[id]) {
+                try {
                     Game.mods[id].disabled = true;
-                }
+                } catch(e) {}
+            }
 
-                // セーブデータ削除
-                if (Game.modSaveData && Game.modSaveData[id]) {
-                    delete Game.modSaveData[id];
-                }
+            // セーブ削除
+            if (Game.modSaveData && Game.modSaveData[id]) {
+                delete Game.modSaveData[id];
+            }
 
-                // ★ここが重要：mods自体も削除
-                if (Game.mods[id]) {
-                    delete Game.mods[id];
-                }
+            // ★mods削除（最後）
+            if (Game.mods[id]) {
+                delete Game.mods[id];
+            }
 
-                Game.Notify(id + '削除', 'MODとセーブデータを削除しました', [16, 5], 2);
+            // ★UI側からも削除（重要）
+            this.configs = this.configs.filter(c => c.id !== id);
 
-                Game.WriteSave();
+            Game.Notify(id + '削除', 'MODとセーブデータを削除しました', [16, 5], 2);
 
-                Game.ClosePrompt();
-                setTimeout(() => this.openMainMenu(), 50);
-            },
+            Game.WriteSave();
+
+            Game.ClosePrompt();
+
+            // ★UI即更新
+            setTimeout(() => window.CCBM.openMainMenu(), 50);
+        },
 
         restoreMod: function(id) {
+
             if (!this.removedMods[id]) return;
 
             delete this.removedMods[id];
+
+            // ★configs初期化防止 → そのまま再登録させる
             this.configs = this.configs.filter(c => c.id !== id);
 
             Game.Notify(id + '復元', 'MODを再読み込みします', [16, 5], 2);
 
             const BASE_URL = 'https://tybob8010.github.io/CCBM/';
+
+            // ★キャッシュ回避付き再読み込み
             Game.LoadMod(`${BASE_URL}${id}/${id}.js?t=${Date.now()}`);
 
             Game.WriteSave();
 
             Game.ClosePrompt();
-            setTimeout(() => window.CCBM.openMainMenu(), 100);
+
+            // ★再描画
+            setTimeout(() => window.CCBM.openMainMenu(), 150);
         },
 
 
@@ -91,12 +108,14 @@
         
         injectStyle: function() {
             if (document.getElementById('ccbm_styles')) return;
+
             const style = document.createElement('style');
             style.id = 'ccbm_styles';
             style.innerHTML = `
                 @keyframes ccbmX { from { left:-5px } to { left:5px } }
                 @keyframes ccbmY { from { transform:translateY(0)} to { transform:translateY(-7px)} }
                 @keyframes ccbmRot { from { transform:rotate(0)} to { transform:rotate(360deg)} }
+
                 .ccbm-base {
                     position:absolute;
                     bottom:50px;
@@ -104,17 +123,20 @@
                     width:60px;height:60px;
                     z-index:1000000;
                 }
+
                 .ccbm-shaker {
                     position:absolute;
                     width:48px;height:48px;
                     animation: ccbmX 0.6s infinite alternate, ccbmY 0.3s infinite alternate;
                 }
+
                 #ccbm_icon {
                     width:48px;height:48px;
                     background:url(img/icons.png) -192px 0;
                     cursor:pointer;
                     filter: drop-shadow(0 0 4px #000);
                 }
+
                 #ccbm_shine {
                     position:absolute;
                     width:60px;height:60px;
@@ -124,14 +146,17 @@
                     opacity:0;
                     animation: ccbmRot 20s linear infinite;
                 }
+
                 .ccbm-base:hover #ccbm_shine {
                     opacity:0.8;
                 }
+
                 .ccbm-row {
                     display:flex;
                     justify-content:space-between;
                     margin:4px 0;
                 }
+
                 .ccbm-delete {
                     color:#f66;
                     cursor:pointer;
@@ -148,6 +173,7 @@
         
         drawIcon: function() {
             if (document.getElementById('ccbm_base')) return;
+
             const target = l('sectionLeft');
             if (!target) return;
 
@@ -183,6 +209,7 @@
         //=========================
         
         openMainMenu: function() {
+
             Game.Prompt(`
                 <h3>CCBM Settings</h3>
                 <div id="ccbm_config_list"></div>
@@ -193,6 +220,10 @@
             const content = document.getElementById('ccbm_config_content');
 
             if (!list || !content) return;
+
+            // ★毎回クリア（増殖防止）
+            list.innerHTML = '';
+            content.innerHTML = '';
 
             this.configs.forEach(cfg => {
 
@@ -229,21 +260,25 @@
     //=========================
     //MOD登録
     //=========================
+
     Game.registerMod("CCBM", {
         init: function() {
+
             Game.mods["CCBM"].confirmRemove = window.CCBM.confirmRemove.bind(window.CCBM);
             Game.mods["CCBM"].removeMod = window.CCBM.removeMod.bind(window.CCBM);
             Game.mods["CCBM"].restoreMod = window.CCBM.restoreMod.bind(window.CCBM);
-            
+
             Game.registerHook('draw', () => {
                 window.CCBM.drawIcon();
             });
         },
+
         save: function() {
             return JSON.stringify({
                 removedMods: window.CCBM.removedMods
             });
         },
+
         load: function(str) {
             if (!str) return;
             try {
