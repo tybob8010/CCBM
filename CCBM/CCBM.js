@@ -14,6 +14,7 @@
         configs: [],
         removedMods: {},
         registerConfig: function(id, name, callback) {
+            if (this.configs.some(c => c.id === id)) return;
             this.configs.push({ id, name, callback });
         },
 
@@ -70,6 +71,7 @@
             if (!this.removedMods[id]) return;
 
             delete this.removedMods[id];
+            this.configs = this.configs.filter(c => c.id !== id);
 
             Game.Notify(id + '復元', 'MODを再読み込みします', [16, 5], 2);
 
