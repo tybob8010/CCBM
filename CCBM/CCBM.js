@@ -44,61 +44,45 @@
 
         confirmRemove: function(id) {
 
-            // フラグ
             this.removedMods[id] = 1;
 
-            // MOD停止
             if (Game.mods[id]) {
-                try {
-                    Game.mods[id].disabled = true;
-                } catch(e) {}
+                try { Game.mods[id].disabled = true; } catch(e) {}
             }
 
-            // セーブ削除
             if (Game.modSaveData && Game.modSaveData[id]) {
                 delete Game.modSaveData[id];
             }
 
-            // ★mods削除（最後）
             if (Game.mods[id]) {
                 delete Game.mods[id];
             }
 
-            // ★UI側からも削除（重要）
             this.configs = this.configs.filter(c => c.id !== id);
-
-            Game.Notify(id + '削除', 'MODとセーブデータを削除しました', [16, 5], 2);
 
             Game.WriteSave();
 
-            Game.ClosePrompt();
+            Game.Notify(id + '削除', 'ページを再読み込みします', [16, 5], 2);
 
-            // ★UI即更新
-            setTimeout(() => window.CCBM.openMainMenu(), 50);
+            // ★ここが重要
+            setTimeout(() => {
+                location.reload();
+            }, 500);
         },
-
         restoreMod: function(id) {
 
             if (!this.removedMods[id]) return;
 
             delete this.removedMods[id];
 
-            // ★configs初期化防止 → そのまま再登録させる
-            this.configs = this.configs.filter(c => c.id !== id);
-
-            Game.Notify(id + '復元', 'MODを再読み込みします', [16, 5], 2);
-
-            const BASE_URL = 'https://tybob8010.github.io/CCBM/';
-
-            // ★キャッシュ回避付き再読み込み
-            Game.LoadMod(`${BASE_URL}${id}/${id}.js?t=${Date.now()}`);
-
             Game.WriteSave();
 
-            Game.ClosePrompt();
+            Game.Notify(id + '復元', 'ページを再読み込みします', [16, 5], 2);
 
-            // ★再描画
-            setTimeout(() => window.CCBM.openMainMenu(), 150);
+            // ★ここが重要
+            setTimeout(() => {
+                location.reload();
+            }, 500);
         },
 
 
