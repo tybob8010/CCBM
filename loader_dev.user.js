@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name          CCBM_dev
 // @namespace     https://github.com/tybob8010/CCBM/
-// @version       9.9.13
+// @version       0.0.0
 // @author        tybob8010(ぼぶ)
 // @match         https://orteil.dashnet.org/cookieclicker/
 // @grant         window.close
