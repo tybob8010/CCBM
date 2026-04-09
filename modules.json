@@ -1,6 +1,7 @@
 {
     "active_modules": [
         "CCBM/CCBM.js",
-        "CCACM/CCACM.js"
+        "CCACM/CCACM.js",
+        "CCCSM/CCCSM.js"
     ]
 }
