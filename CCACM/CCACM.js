@@ -29,33 +29,44 @@
                 const todayStr = now.toLocaleDateString();
                 const currentTimeStr = now.getHours().toString().padStart(2, '0') + ":" + 
                                        now.getMinutes().toString().padStart(2, '0');
+                
                 if (this.config.lastExecutedDay === todayStr && 
                     this.config.lastExecutedTime === this.config.targetTime) return;
+
                 if (currentTimeStr === this.config.targetTime) {
                     this.config.lastExecutedDay = todayStr;
                     this.config.lastExecutedTime = this.config.targetTime;
                     
-                    Game.WriteSave();
-                    Game.Notify('自動終了', '設定時刻です。終了します。', [23, 11], 3);
-                    setTimeout(() => {
-                        Game.WriteSave();
-                        
-                        if (typeof window.closeCCACM === 'function') {
-                            window.closeCCACM();
-                            return;
-                        }
-                        setTimeout(() => {
-                            window.open('javascript:window.close()', '_self');
-                            window.close();
-                        }, 500);
-                        setTimeout(() => {
-                            if (!window.closed) window.location.replace("about:blank");
-                        }, 1500);
-                    }, 2000);
+                    // 実行
+                    this.executeShutdown();
                 }
             }, 1000);
             console.log(`[${this.name}] Logic Initialized.`);
         },
+
+        executeShutdown: function() {
+            Game.WriteSave();
+            Game.Notify('自動終了', '設定時刻です。終了します。', [23, 11], 3);
+
+            setTimeout(() => {
+                Game.WriteSave();
+
+                // ★確実に存在する前提で呼ぶ
+                try {
+                    if (window.closeCCACM) {
+                        window.closeCCACM();
+                        return;
+                    }
+                } catch (e) {
+                    console.error("[CCACM] closeCCACM call failed", e);
+                }
+
+                // フォールバック（ほぼ無意味だが残す）
+                window.close();
+
+            }, 2000);
+        },
+
         renderConfig: function(container) {
             const wrap = document.createElement('div');
             wrap.style.textAlign = 'center';
