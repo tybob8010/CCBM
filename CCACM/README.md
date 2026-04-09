@@ -1,11 +1,19 @@
 # CCACM詳細情報
-### Latest Version : `v.1.1.0`
+### Latest Version : `v.1.1.1`
+
+CookieClickerAutoClosingMOD
 
 ブラウザ版CookieClickerを自動で終了させるMOD。指定時間にセーブしてタブを閉じます。
 
 ---
 
 ## バージョン情報
+### v.1.1.1
+
+*2026/04/08公開*
+
+* CCACMの本来の機能であるタブを閉じる動作が行われない問題を改善しました。
+
 ### v.1.1.0
 
 *2026/03/21公開*
