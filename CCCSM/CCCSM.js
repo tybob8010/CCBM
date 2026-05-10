@@ -54,7 +54,7 @@
 
                         <div class="listing" style="margin-top:10px;">
                             <a class="smallFancyButton" id="cccsm_toggle">
-                                ${MOD.enabled ? '自動バックアップ ON' : '自動バックアップ OFF'}
+                                ${MOD.enabled ? '自動バックアップ OFF' : '自動バックアップ ON'}
                             </a>
 
                             <a class="smallFancyButton" id="cccsm_backup_now">

@@ -1,6 +1,6 @@
 /*
     CCBM (Cookie Clicker Basic MOD)
-    v.1.1.0
+    v.1.2.0
 */
 
 (function() {
