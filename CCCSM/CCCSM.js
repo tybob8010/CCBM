@@ -1,119 +1,334 @@
 /*
     CCCSM (Cookie Clicker Cloud Save MOD)
-    v.1.0.0β
+    v.1.0.0
 */
 
-(function(){
+(function() {
 
-    const DEFAULTS={
-        webhook:'',
-        interval:10
-    };
+    Game.registerMod("CCCSM", {
 
-    window.CCCSM={
-        data:{...DEFAULTS},
-        timer:null,
+        enabled: true,
+        webhook: '',
+        interval: 10,
+        lastBackup: '未実行',
+        timer: null,
 
-        start:function(){
-            if(this.timer) clearInterval(this.timer);
-            if(!this.data.webhook) return;
+        init: function() {
 
-            if (!Game || !Game.ready) return;
-            sendSaveAsFile();
+            const MOD = this;
 
-            this.timer=setInterval(()=>this.send(),this.data.interval*60*1000);
-            console.log('[CCCSM] started',this.data.interval,'min');
-        },
+            //=========================
+            //CCBM設定画面登録
+            //=========================
 
-        stop:function(){
-            if(this.timer){
-                clearInterval(this.timer);
-                this.timer=null;
-            }
-        },
+            if (window.CCBM) {
+                window.CCBM.registerConfig("CCCSM", "CCCSM Cloud Save", function(content) {
 
-        send:async function(){
-            try{
-                const saveData=Game.WriteSave(1);
-                const now=new Date();
-                const fileName=`cookie_save_${now.toISOString().replace(/[:.]/g,'-')}.txt`;
+                    const box = document.createElement('div');
+                    box.className = 'block';
 
-                const blob=new Blob([saveData],{type:'text/plain'});
-                const fd=new FormData();
-                fd.append('file',blob,fileName);
-                fd.append('payload_json',JSON.stringify({
-                    content:`🍪 Auto Backup: ${now.toLocaleString()}`
-                }));
+                    box.innerHTML = `
+                        <div class="listing">
+                            <b>Discord Webhook URL</b>
+                        </div>
 
-                const res=await fetch(this.data.webhook,{method:'POST',body:fd});
-                if(res.ok){
-                    console.log('[CCCSM] success:',fileName);
-                }else{
-                    console.error('[CCCSM] failed:',res.status);
-                }
-            }catch(e){
-                console.error('[CCCSM] error:',e);
-            }
-        }
-    };
+                        <div class="listing">
+                            <input id="cccsm_webhook"
+                                type="text"
+                                value="${MOD.webhook}"
+                                placeholder="https://discord.com/api/webhooks/..."
+                                style="width:100%;">
+                        </div>
 
-    Game.registerMod("CCCSM",{
-        init:function(){
+                        <div class="listing" style="margin-top:10px;">
+                            <b>Backup Interval (minutes)</b>
+                        </div>
 
-            // CCBM設定UI登録
-            if(window.CCBM){
-                window.CCBM.registerConfig("CCCSM","Cloud Save",function(container){
+                        <div class="listing">
+                            <input id="cccsm_interval"
+                                type="number"
+                                min="1"
+                                value="${MOD.interval}"
+                                style="width:80px;">
+                        </div>
 
-                    const wrap=document.createElement('div');
+                        <div class="listing" style="margin-top:10px;">
+                            <a class="smallFancyButton" id="cccsm_toggle">
+                                ${MOD.enabled ? '自動バックアップ ON' : '自動バックアップ OFF'}
+                            </a>
 
-                    // webhook
-                    const input=document.createElement('input');
-                    input.placeholder='Webhook URL';
-                    input.style.width='100%';
-                    input.value=window.CCCSM.data.webhook;
+                            <a class="smallFancyButton" id="cccsm_backup_now">
+                                今すぐバックアップ
+                            </a>
 
-                    // interval
-                    const interval=document.createElement('input');
-                    interval.type='number';
-                    interval.min=1;
-                    interval.value=window.CCCSM.data.interval;
+                            <a class="smallFancyButton" id="cccsm_save_settings">
+                                設定保存
+                            </a>
+                        </div>
 
-                    // save btn
-                    const btn=document.createElement('button');
-                    btn.textContent='保存';
-                    btn.onclick=()=>{
-                        window.CCCSM.data.webhook=input.value;
-                        window.CCCSM.data.interval=parseInt(interval.value)||10;
-                        Game.WriteSave();
-                        window.CCCSM.start();
+                        <div class="listing" style="margin-top:10px;">
+                            <b>Last Backup :</b>
+                            <span id="cccsm_last_backup">${MOD.lastBackup}</span>
+                        </div>
+                    `;
+
+                    content.appendChild(box);
+
+                    //=========================
+                    //自動バックアップON/OFF
+                    //=========================
+
+                    l('cccsm_toggle').onclick = function() {
+
+                        MOD.enabled = !MOD.enabled;
+
+                        this.textContent =
+                            MOD.enabled ?
+                            '自動バックアップ ON' :
+                            '自動バックアップ OFF';
+
+                        MOD.restartTimer();
+
+                        Game.Notify(
+                            'CCCSM',
+                            MOD.enabled ? '自動バックアップON' : '自動バックアップOFF',
+                            [16, 5],
+                            2
+                        );
                     };
 
-                    wrap.appendChild(document.createTextNode('Webhook:'));
-                    wrap.appendChild(input);
-                    wrap.appendChild(document.createElement('br'));
-                    wrap.appendChild(document.createTextNode('Interval(min):'));
-                    wrap.appendChild(interval);
-                    wrap.appendChild(document.createElement('br'));
-                    wrap.appendChild(btn);
+                    //=========================
+                    //手動バックアップ
+                    //=========================
 
-                    container.appendChild(wrap);
+                    l('cccsm_backup_now').onclick = function() {
+                        MOD.sendSaveAsFile();
+                    };
+
+                    //=========================
+                    //設定保存
+                    //=========================
+
+                    l('cccsm_save_settings').onclick = function() {
+
+                        MOD.webhook = l('cccsm_webhook').value.trim();
+
+                        MOD.interval =
+                            Math.max(
+                                1,
+                                parseInt(l('cccsm_interval').value) || 10
+                            );
+
+                        MOD.restartTimer();
+
+                        Game.WriteSave();
+
+                        Game.Notify(
+                            'CCCSM',
+                            '設定を保存しました',
+                            [16, 5],
+                            2
+                        );
+                    };
                 });
             }
 
-            // 起動
-            setTimeout(()=>window.CCCSM.start(),2000);
+            //=========================
+            //起動
+            //=========================
+
+            this.restartTimer();
+
+            console.log(
+                `[CCCSM] Loaded Interval:${this.interval}min`
+            );
         },
 
-        save:function(){
-            return JSON.stringify(window.CCCSM.data);
+        //=========================
+        //タイマー再構築
+        //=========================
+
+        restartTimer: function() {
+
+            if (this.timer) {
+                clearInterval(this.timer);
+                this.timer = null;
+            }
+
+            if (!this.enabled) return;
+
+            // 初回即時バックアップ
+            this.sendSaveAsFile();
+
+            // 定期バックアップ
+            this.timer = setInterval(() => {
+                this.sendSaveAsFile();
+            }, this.interval * 60 * 1000);
         },
 
-        load:function(str){
-            if(!str)return;
-            try{
-                const d=JSON.parse(str);
-                window.CCCSM.data={...DEFAULTS,...d};
-            }catch(e){}
+        //=========================
+        //バックアップ送信
+        //=========================
+
+        sendSaveAsFile: async function() {
+
+            try {
+
+                if (!Game || !Game.ready) return;
+
+                if (!this.enabled) return;
+
+                if (!this.webhook) {
+                    console.warn('[CCCSM] Webhook URL Empty');
+                    return;
+                }
+
+                const saveData = Game.WriteSave(1);
+
+                const timestamp =
+                    new Date()
+                    .toISOString()
+                    .replace(/[:.]/g, '-');
+
+                const fileName =
+                    `cookie_save_${timestamp}.txt`;
+
+                const blob =
+                    new Blob(
+                        [saveData],
+                        { type: 'text/plain' }
+                    );
+
+                const formData = new FormData();
+
+                formData.append(
+                    'file',
+                    blob,
+                    fileName
+                );
+
+                formData.append(
+                    'payload_json',
+                    JSON.stringify({
+                        content:
+                            `🍪 Cookie Clicker Backup\n` +
+                            `Time : ${new Date().toLocaleString()}`
+                    })
+                );
+
+                const response = await fetch(
+                    this.webhook,
+                    {
+                        method: 'POST',
+                        body: formData
+                    }
+                );
+
+                if (response.ok) {
+
+                    this.lastBackup =
+                        new Date().toLocaleString();
+
+                    if (l('cccsm_last_backup')) {
+                        l('cccsm_last_backup').textContent =
+                            this.lastBackup;
+                    }
+
+                    console.log(
+                        `[CCCSM] Backup Success : ${fileName}`
+                    );
+
+                    Game.Notify(
+                        'CCCSM',
+                        'バックアップ完了',
+                        [16, 5],
+                        1
+                    );
+
+                } else {
+
+                    console.error(
+                        '[CCCSM] Upload Failed :',
+                        response.status
+                    );
+
+                    Game.Notify(
+                        'CCCSM',
+                        `送信失敗 : ${response.status}`,
+                        [16, 5],
+                        2
+                    );
+                }
+
+            } catch(err) {
+
+                console.error(
+                    '[CCCSM] Error :',
+                    err
+                );
+
+                Game.Notify(
+                    'CCCSM',
+                    'バックアップエラー',
+                    [16, 5],
+                    2
+                );
+            }
+        },
+
+        //=========================
+        //保存
+        //=========================
+
+        save: function() {
+
+            return JSON.stringify({
+
+                enabled: this.enabled,
+
+                webhook: this.webhook,
+
+                interval: this.interval,
+
+                lastBackup: this.lastBackup
+            });
+        },
+
+        //=========================
+        //読み込み
+        //=========================
+
+        load: function(str) {
+
+            if (!str) return;
+
+            try {
+
+                const data = JSON.parse(str);
+
+                if (typeof data.enabled !== 'undefined') {
+                    this.enabled = data.enabled;
+                }
+
+                if (typeof data.webhook === 'string') {
+                    this.webhook = data.webhook;
+                }
+
+                if (typeof data.interval === 'number') {
+                    this.interval = data.interval;
+                }
+
+                if (typeof data.lastBackup === 'string') {
+                    this.lastBackup = data.lastBackup;
+                }
+
+            } catch(e) {
+
+                console.error(
+                    '[CCCSM] Load Failed',
+                    e
+                );
+            }
         }
     });
 
