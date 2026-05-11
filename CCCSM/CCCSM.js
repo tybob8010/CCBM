@@ -1,6 +1,6 @@
 /*
     CCCSM (Cookie Clicker Cloud Save MOD)
-    v.1.0.0
+    v.1.0.1
 */
 
 (function() {
@@ -12,6 +12,7 @@
         interval: 10,
         lastBackup: '未実行',
         timer: null,
+        isSending: false,
 
         init: function() {
 
@@ -22,115 +23,151 @@
             //=========================
 
             if (window.CCBM) {
-                window.CCBM.registerConfig("CCCSM", "CCCSM Cloud Save", function(content) {
 
-                    const box = document.createElement('div');
-                    box.className = 'block';
+                window.CCBM.registerConfig(
+                    "CCCSM",
+                    "CCCSM Cloud Save",
+                    function(content) {
 
-                    box.innerHTML = `
-                        <div class="listing">
-                            <b>Discord Webhook URL</b>
-                        </div>
+                        const box = document.createElement('div');
+                        box.className = 'block';
 
-                        <div class="listing">
-                            <input id="cccsm_webhook"
-                                type="text"
-                                value="${MOD.webhook}"
-                                placeholder="https://discord.com/api/webhooks/..."
-                                style="width:100%;">
-                        </div>
+                        box.innerHTML = `
+                            <div class="listing">
+                                <b>Discord Webhook URL</b>
+                            </div>
 
-                        <div class="listing" style="margin-top:10px;">
-                            <b>Backup Interval (minutes)</b>
-                        </div>
+                            <div class="listing">
+                                <input
+                                    id="cccsm_webhook"
+                                    type="text"
+                                    value="${MOD.webhook}"
+                                    placeholder="https://discord.com/api/webhooks/..."
+                                    style="width:100%;">
+                            </div>
 
-                        <div class="listing">
-                            <input id="cccsm_interval"
-                                type="number"
-                                min="1"
-                                value="${MOD.interval}"
-                                style="width:80px;">
-                        </div>
+                            <div class="listing" style="margin-top:10px;">
+                                <b>Backup Interval (minutes)</b>
+                            </div>
 
-                        <div class="listing" style="margin-top:10px;">
-                            <a class="smallFancyButton" id="cccsm_toggle">
-                                ${MOD.enabled ? '自動バックアップ ON' : '自動バックアップ OFF'}
-                            </a>
+                            <div class="listing">
+                                <input
+                                    id="cccsm_interval"
+                                    type="number"
+                                    min="1"
+                                    value="${MOD.interval}"
+                                    style="width:80px;">
+                            </div>
 
-                            <a class="smallFancyButton" id="cccsm_backup_now">
-                                今すぐバックアップ
-                            </a>
+                            <div class="listing" style="margin-top:10px;">
 
-                            <a class="smallFancyButton" id="cccsm_save_settings">
-                                設定保存
-                            </a>
-                        </div>
+                                <a class="smallFancyButton" id="cccsm_toggle">
+                                    ${MOD.enabled ?
+                                        '自動バックアップ OFF' :
+                                        '自動バックアップ ON'}
+                                </a>
 
-                        <div class="listing" style="margin-top:10px;">
-                            <b>Last Backup :</b>
-                            <span id="cccsm_last_backup">${MOD.lastBackup}</span>
-                        </div>
-                    `;
+                                <a class="smallFancyButton" id="cccsm_backup_now">
+                                    今すぐバックアップ
+                                </a>
 
-                    content.appendChild(box);
+                                <a class="smallFancyButton" id="cccsm_save_settings">
+                                    設定保存
+                                </a>
 
-                    //=========================
-                    //自動バックアップON/OFF
-                    //=========================
+                            </div>
 
-                    l('cccsm_toggle').onclick = function() {
+                            <div class="listing" style="margin-top:10px;">
+                                <b>Last Backup :</b>
+                                <span id="cccsm_last_backup">
+                                    ${MOD.lastBackup}
+                                </span>
+                            </div>
+                        `;
 
-                        MOD.enabled = !MOD.enabled;
+                        content.appendChild(box);
 
-                        this.textContent =
-                            MOD.enabled ?
-                            '自動バックアップ ON' :
-                            '自動バックアップ OFF';
+                        //=========================
+                        //自動バックアップON/OFF
+                        //=========================
 
-                        MOD.restartTimer();
+                        l('cccsm_toggle').onclick = function() {
 
-                        Game.Notify(
-                            'CCCSM',
-                            MOD.enabled ? '自動バックアップON' : '自動バックアップOFF',
-                            [16, 5],
-                            2
-                        );
-                    };
+                            MOD.enabled = !MOD.enabled;
 
-                    //=========================
-                    //手動バックアップ
-                    //=========================
+                            this.textContent =
+                                MOD.enabled ?
+                                '自動バックアップ ON' :
+                                '自動バックアップ OFF';
 
-                    l('cccsm_backup_now').onclick = function() {
-                        MOD.sendSaveAsFile();
-                    };
+                            MOD.restartTimer(true);
 
-                    //=========================
-                    //設定保存
-                    //=========================
+                            Game.WriteSave();
 
-                    l('cccsm_save_settings').onclick = function() {
-
-                        MOD.webhook = l('cccsm_webhook').value.trim();
-
-                        MOD.interval =
-                            Math.max(
-                                1,
-                                parseInt(l('cccsm_interval').value) || 10
+                            Game.Notify(
+                                'CCCSM',
+                                MOD.enabled ?
+                                '自動バックアップON' :
+                                '自動バックアップOFF',
+                                [16, 5],
+                                2
                             );
+                        };
 
-                        MOD.restartTimer();
+                        //=========================
+                        //手動バックアップ
+                        //=========================
 
-                        Game.WriteSave();
+                        l('cccsm_backup_now').onclick =
+                            async function() {
 
-                        Game.Notify(
-                            'CCCSM',
-                            '設定を保存しました',
-                            [16, 5],
-                            2
-                        );
-                    };
-                });
+                            if (MOD.isSending) return;
+
+                            this.classList.add('off');
+                            this.style.pointerEvents = 'none';
+
+                            await MOD.sendSaveAsFile();
+
+                            this.classList.remove('off');
+                            this.style.pointerEvents = '';
+                        };
+
+                        //=========================
+                        //設定保存
+                        //=========================
+
+                        l('cccsm_save_settings').onclick =
+                            function() {
+
+                            MOD.webhook =
+                                l('cccsm_webhook')
+                                .value
+                                .trim();
+
+                            MOD.interval =
+                                Math.max(
+                                    1,
+                                    parseInt(
+                                        l('cccsm_interval').value
+                                    ) || 10
+                                );
+
+                            l('cccsm_interval').value =
+                                MOD.interval;
+
+                            MOD.restartTimer(true);
+
+                            Game.WriteSave();
+
+                            Game.Notify(
+                                'CCCSM',
+                                '設定を保存しました',
+                                [16, 5],
+                                2
+                            );
+                        };
+                    }
+                );
             }
 
             //=========================
@@ -148,21 +185,28 @@
         //タイマー再構築
         //=========================
 
-        restartTimer: function() {
+        restartTimer: function(skipImmediate=false) {
 
             if (this.timer) {
+
                 clearInterval(this.timer);
+
                 this.timer = null;
             }
 
             if (!this.enabled) return;
 
             // 初回即時バックアップ
-            this.sendSaveAsFile();
+            if (!skipImmediate) {
+
+                this.sendSaveAsFile();
+            }
 
             // 定期バックアップ
             this.timer = setInterval(() => {
+
                 this.sendSaveAsFile();
+
             }, this.interval * 60 * 1000);
         },
 
@@ -172,6 +216,17 @@
 
         sendSaveAsFile: async function() {
 
+            if (this.isSending) {
+
+                console.warn(
+                    '[CCCSM] Already Sending'
+                );
+
+                return;
+            }
+
+            this.isSending = true;
+
             try {
 
                 if (!Game || !Game.ready) return;
@@ -179,11 +234,16 @@
                 if (!this.enabled) return;
 
                 if (!this.webhook) {
-                    console.warn('[CCCSM] Webhook URL Empty');
+
+                    console.warn(
+                        '[CCCSM] Webhook URL Empty'
+                    );
+
                     return;
                 }
 
-                const saveData = Game.WriteSave(1);
+                const saveData =
+                    Game.WriteSave(1);
 
                 const timestamp =
                     new Date()
@@ -196,10 +256,13 @@
                 const blob =
                     new Blob(
                         [saveData],
-                        { type: 'text/plain' }
+                        {
+                            type: 'text/plain'
+                        }
                     );
 
-                const formData = new FormData();
+                const formData =
+                    new FormData();
 
                 formData.append(
                     'file',
@@ -216,13 +279,14 @@
                     })
                 );
 
-                const response = await fetch(
-                    this.webhook,
-                    {
-                        method: 'POST',
-                        body: formData
-                    }
-                );
+                const response =
+                    await fetch(
+                        this.webhook,
+                        {
+                            method: 'POST',
+                            body: formData
+                        }
+                    );
 
                 if (response.ok) {
 
@@ -230,6 +294,7 @@
                         new Date().toLocaleString();
 
                     if (l('cccsm_last_backup')) {
+
                         l('cccsm_last_backup').textContent =
                             this.lastBackup;
                     }
@@ -273,6 +338,10 @@
                     [16, 5],
                     2
                 );
+
+            } finally {
+
+                this.isSending = false;
             }
         },
 
@@ -304,22 +373,46 @@
 
             try {
 
-                const data = JSON.parse(str);
+                const data =
+                    JSON.parse(str);
 
-                if (typeof data.enabled !== 'undefined') {
-                    this.enabled = data.enabled;
+                if (
+                    typeof data.enabled !==
+                    'undefined'
+                ) {
+
+                    this.enabled =
+                        data.enabled;
                 }
 
-                if (typeof data.webhook === 'string') {
-                    this.webhook = data.webhook;
+                if (
+                    typeof data.webhook ===
+                    'string'
+                ) {
+
+                    this.webhook =
+                        data.webhook;
                 }
 
-                if (typeof data.interval === 'number') {
-                    this.interval = data.interval;
+                if (
+                    typeof data.interval ===
+                    'number'
+                ) {
+
+                    this.interval =
+                        Math.max(
+                            1,
+                            data.interval
+                        );
                 }
 
-                if (typeof data.lastBackup === 'string') {
-                    this.lastBackup = data.lastBackup;
+                if (
+                    typeof data.lastBackup ===
+                    'string'
+                ) {
+
+                    this.lastBackup =
+                        data.lastBackup;
                 }
 
             } catch(e) {
