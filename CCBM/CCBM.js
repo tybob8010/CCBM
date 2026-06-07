@@ -1,6 +1,6 @@
 /*
     CCBM (Cookie Clicker Basic MOD)
-    v.1.2.1_dev2
+    v.1.2.1_dev3
 */
 
 (function() {
@@ -246,6 +246,14 @@
                     <div id="ccbm_config_content"></div>
                 </div>
             `, ['閉じる']);
+
+            // Game.Promptのウィンドウ幅を強制上書き
+            const prompt = document.getElementById('prompt');
+            if (prompt) {
+                prompt.style.width = '750px';
+                prompt.style.maxWidth = '90vw';
+            }
+
             const list = document.getElementById('ccbm_config_list');
             const content = document.getElementById('ccbm_config_content');
             if (!list || !content) return;
