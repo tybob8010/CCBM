@@ -7,7 +7,7 @@
 * [サポート・連絡先](#サポート連絡先)
 * [更新履歴](#更新履歴)
 
-### Latest Version : `v.1.1.0` (CCBM)
+### Latest Version : `v.1.2.0` (CCBM)
 ※各MODのバージョン情報は[収録MOD一覧](#収録mod一覧)をご覧ください。
 
 ---
@@ -70,9 +70,9 @@ CookieClickerのページに移動して実際にMODが起動しているか確�
 
 | MOD名 | 略称 | Latest Version | 機能概要 |　詳細 |
 | :--- | :--- | :--- | :--- | :--- |
-| CookieClickerBasicMOD | CCBM | `v.1.1.0` | 歯車アイコンを表示し、各MODの設定を統合管理します。 | --- |
+| CookieClickerBasicMOD | CCBM | `v.1.2.0` | 歯車アイコンを表示し、各MODの設定を統合管理します。なお、最新バージョンはこのバージョンを表しています。 | --- |
 | CookieClickerAutoClosingMOD | CCACM | `v.1.1.1` | 指定した時刻に自動でセーブを行い、タブを閉じます。 | [こちら](/CCACM/README.md) |
-| CookieClickerCloudSaveMOD | CCCSM | `v.1.0.0` | webhook機能を使い、一定時間ごとにDiscordにセーブデータの.txtファイルを送信します。 |　[こちら](/CCCSM/README.md) |
+| CookieClickerCloudSaveMOD | CCCSM | `v.1.0.1` | webhook機能を使い、一定時間ごとにDiscordにセーブデータの.txtファイルを送信します。 |　[こちら](/CCCSM/README.md) |
 
 ---
 
@@ -98,6 +98,13 @@ CookieClickerのページに移動して実際にMODが起動しているか確�
 
 
 ## 📝更新履歴
+## v.1.2.0
+
+*2026/05/10公開*
+
+**CCCSM正式リリース**
+* **CCACM実装**: [CCCSM](/CCCSM/README.md)をCCBMから起動できるようにしました。
+
 ### v.1.1.0
 
 *2026/04/08公開*
