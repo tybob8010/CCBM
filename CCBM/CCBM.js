@@ -1,6 +1,6 @@
 /*
     CCBM (Cookie Clicker Basic MOD)
-    v.1.2.0
+    v.1.2.1_dev2
 */
 
 (function() {
@@ -186,7 +186,7 @@
                 #ccbm_layout {
                     display:flex;
                     gap:16px;
-                    min-width:520px;
+                    min-width:700px;
                     min-height:160px;
                 }
                 #ccbm_config_list {
@@ -272,6 +272,10 @@
                 row.appendChild(btn);
                 list.appendChild(row);
                 if (!this.removedMods[cfg.id] && !this.disabledMods[cfg.id] && typeof cfg.callback === 'function') {
+                    const heading = document.createElement('h4');
+                    heading.textContent = cfg.id;
+                    heading.style = 'margin:0 0 6px 0; border-bottom:1px solid #555; padding-bottom:4px;';
+                    content.appendChild(heading);
                     cfg.callback(content);
                 }
             });
