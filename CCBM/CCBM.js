@@ -169,12 +169,36 @@
                 .ccbm-row {
                     display:flex;
                     justify-content:space-between;
-                    margin:4px 0;
+                    align-items:center;
+                    margin:6px 0;
+                    padding:4px 6px;
+                    border-bottom:1px solid #333;
+                }
+                .ccbm-row:last-child {
+                    border-bottom:none;
                 }
                 .ccbm-delete {
                     color:#f66;
                     cursor:pointer;
                     margin-left:10px;
+                    white-space:nowrap;
+                }
+                #ccbm_layout {
+                    display:flex;
+                    gap:16px;
+                    min-width:520px;
+                    min-height:160px;
+                }
+                #ccbm_config_list {
+                    flex:0 0 160px;
+                    border-right:1px solid #555;
+                    padding-right:12px;
+                }
+                #ccbm_config_content {
+                    flex:1;
+                    padding-left:4px;
+                    overflow-y:auto;
+                    max-height:320px;
                 }
             `;
             document.head.appendChild(style);
@@ -217,8 +241,10 @@
         openMainMenu: function() {
             Game.Prompt(`
                 <h3>CCBM Settings</h3>
-                <div id="ccbm_config_list"></div>
-                <div id="ccbm_config_content"></div>
+                <div id="ccbm_layout">
+                    <div id="ccbm_config_list"></div>
+                    <div id="ccbm_config_content"></div>
+                </div>
             `, ['閉じる']);
             const list = document.getElementById('ccbm_config_list');
             const content = document.getElementById('ccbm_config_content');
